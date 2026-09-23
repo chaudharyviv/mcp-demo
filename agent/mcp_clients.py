@@ -5,6 +5,7 @@ Connects to:
 2. GitHub (Streamable HTTP with Bearer PAT)
 3. Mock NetApp ONTAP (stdio subprocess via sys.executable)
 """
+import asyncio
 import os
 import sys
 from contextlib import asynccontextmanager
@@ -14,11 +15,14 @@ from mcp.client.stdio import stdio_client
 from mcp.client.streamable_http import streamablehttp_client
 from agent.settings import get_secret
 
+MCP_TIMEOUT_SECONDS = 30.0
+
 class MCPClientManager:
     """Manages MCP connections and tool execution across servers."""
 
     def __init__(self, github_pat: Optional[str] = None, ontap_server_script: Optional[str] = None):
         self.github_pat = github_pat or get_secret("GITHUB_PAT")
+        self.timeout = MCP_TIMEOUT_SECONDS
         self.ontap_server_script = ontap_server_script or os.path.join(
             os.path.dirname(os.path.dirname(os.path.abspath(__file__))),
             "ontap_mock",
@@ -72,9 +76,12 @@ class MCPClientManager:
 
         is_remote = self.servers_config[server_name]["type"] == "http"
         tools = []
-        try:
+        async def _list_tools():
             async with self._open_session(server_name) as session:
-                res = await session.list_tools()
+                return await session.list_tools()
+
+        try:
+            res = await asyncio.wait_for(_list_tools(), self.timeout)
             for tool in res.tools:
                 tool_dict = {
                     "name": tool.name,
@@ -89,6 +96,8 @@ class MCPClientManager:
                     tool_dict["original_name"] = tool.name
                 tools.append(tool_dict)
             return {"status": "online", "tools": tools, "error": None}
+        except asyncio.TimeoutError:
+            return {"status": "offline", "tools": [], "error": f"Timed out after {self.timeout:.0f}s"}
         except Exception as e:
             return {"status": "offline", "tools": [], "error": str(e)}
 
@@ -111,6 +120,12 @@ class MCPClientManager:
         if server_name not in self.servers_config:
             raise ValueError(f"Unknown server '{server_name}'")
 
-        async with self._open_session(server_name) as session:
-            res = await session.call_tool(tool_name, arguments)
-            return {"content": res.content, "isError": res.isError}
+        async def _call():
+            async with self._open_session(server_name) as session:
+                return await session.call_tool(tool_name, arguments)
+
+        try:
+            res = await asyncio.wait_for(_call(), self.timeout)
+        except asyncio.TimeoutError:
+            raise TimeoutError(f"{server_name} tool '{tool_name}' timed out after {self.timeout:.0f}s") from None
+        return {"content": res.content, "isError": res.isError}

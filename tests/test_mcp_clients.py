@@ -42,3 +42,25 @@ async def test_learn_discovery_over_streamable_http():
     res = await MCPClientManager().get_server_tools("learn")
     assert res["status"] == "online", res["error"]
     assert any(t["original_name"] == "microsoft_docs_search" for t in res["tools"])
+
+def _hanging_manager() -> MCPClientManager:
+    """ONTAP entry pointed at a process that never speaks MCP, with a short timeout."""
+    manager = MCPClientManager()
+    manager.servers_config["ontap"]["args"] = ["-c", "import time; time.sleep(60)"]
+    manager.timeout = 2.0
+    return manager
+
+@pytest.mark.asyncio
+async def test_hung_server_discovery_times_out_as_offline():
+    """A hung server is reported offline within the timeout (CODE_REVIEW M2)."""
+    import time
+    start = time.monotonic()
+    res = await _hanging_manager().get_server_tools("ontap")
+    assert res["status"] == "offline" and "Timed out" in res["error"]
+    assert time.monotonic() - start < 15
+
+@pytest.mark.asyncio
+async def test_hung_server_tool_call_times_out():
+    """A hung tool call raises TimeoutError instead of blocking the turn (CODE_REVIEW M2)."""
+    with pytest.raises(TimeoutError):
+        await _hanging_manager().call_tool("ontap", "ontap_cluster_health_summary", {})
