@@ -65,6 +65,14 @@ Decisions that refine (not change) the docs. Anything that changes `docs/` needs
 
 ## 7. Session log (newest first)
 
+### 2026-09-23 — Claude Code — Code quality review (review only)
+- Done: Full code quality review of `ontap_mock/`, `agent/`, `ui/` + `app.py`, `tests/`, config files against AGENTS.md and docs/. Report written to `CODE_REVIEW.md` (10 HIGH, 17 MEDIUM, 12 LOW findings; "Do NOT change" list; top 5 fixes). No application code changed.
+- Tests: 24 passed (unchanged code). Probes reproduced: `fastmcp==0.9.2` in `requirements.txt` does not exist on PyPI; live tool results fail `json.dumps` (TextContent); SSE transport fails against Learn while Streamable HTTP works; health summary returns 6 issues (spurious snapshot warnings on `vol_app_bin`, `vol_test_clone`); `grow_by_gb` 0 / negative accepted.
+- Files touched: `CODE_REVIEW.md` (new), `PROGRESS.md`
+- Issues found: see `CODE_REVIEW.md` H1–H10. PROGRESS §4 "Verified locally" ticks for chips 1, 2, 3a, 3c are not consistent with H2–H4 and should be re-verified after fixes.
+- Next step (one concrete action): Owner approves fix #1 in `CODE_REVIEW.md` (re-pin `requirements.txt` to the PROGRESS §3 versions + `mcp`, `pytest-asyncio`), then apply top fixes 2–5 before M7 rehearsals.
+- Credits left (approx.): N/A
+
 ### 2026-09-23 — Kiro — Recovery (No interruption detected)
 - Assessment: Checked git log, tags, stash, and test suite. All work from Antigravity (M1–M6) is properly committed and tagged (`m1-done` through `m6-done`). No stash with interrupted work. No uncommitted changes (except untracked `claude.md` note file). Current HEAD: `318c19a` (M7 steering + docs setup by Kiro).
 - Tests: 24 passed in 8.97s (all M1–M6 tests continue to pass)
