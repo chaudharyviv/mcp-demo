@@ -180,7 +180,7 @@
         "available": 769658139444,
         "snapshot": {
           "reserve_percent": 5,
-          "used": 219902325555
+          "used": 164926744166
         }
       },
       "footprint": 2748779069440
@@ -218,7 +218,7 @@
         "available": 1319413953332,
         "snapshot": {
           "reserve_percent": 5,
-          "used": 219902325555
+          "used": 164926744166
         }
       },
       "footprint": 2199023255552

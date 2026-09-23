@@ -119,3 +119,13 @@ async def test_tool_schemas_carry_bounds_and_descriptions():
     grow = tools["ontap_vol_resize"]["properties"]["grow_by_gb"]
     assert grow["minimum"] == 1 and grow["maximum"] == 5000 and grow["description"]
     assert tools["ontap_vol_show"]["properties"]["limit"]["minimum"] == 1
+
+def test_health_summary_exact_expected_issues():
+    """Health summary returns exactly the four issues in spec.md §3, no extras (CODE_REVIEW H8)."""
+    issues = {(i["severity"], i["object_name"]) for i in ontap_cluster_health_summary()["issues"]}
+    assert issues == {
+        ("critical", "aggr_a01"),
+        ("critical", "vol_legacy_ftp"),
+        ("warning", "vol_reports"),
+        ("warning", "vol_payments_db"),
+    }
