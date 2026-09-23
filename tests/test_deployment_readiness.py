@@ -4,11 +4,17 @@ import pytest
 from agent.mcp_clients import MCPClientManager
 
 def test_streamlit_config_exists():
-    """Verifies .streamlit/config.toml exists and has wide layout."""
+    """Verifies .streamlit/config.toml exists and uses only valid Streamlit options."""
     config_path = Path(__file__).parent.parent / ".streamlit" / "config.toml"
     assert config_path.exists()
     content = config_path.read_text(encoding="utf-8")
-    assert "wide = true" in content
+    assert "[layout]" not in content  # not a Streamlit option (CODE_REVIEW M11)
+
+def test_app_uses_wide_layout_and_larger_font():
+    """Wide layout is set in app.py (spec UI-1); CODE_REVIEW L3."""
+    app_source = (Path(__file__).parent.parent / "app.py").read_text(encoding="utf-8")
+    assert 'layout="wide"' in app_source
+    assert "font-size" in app_source
 
 def test_secrets_example_exists():
     """Verifies .streamlit/secrets.toml.example exists."""

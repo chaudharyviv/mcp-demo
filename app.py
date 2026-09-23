@@ -20,6 +20,9 @@ st.set_page_config(
     initial_sidebar_state="expanded"
 )
 
+# Larger base font for screen share (spec UI-1); Streamlit sizes text in rem, so this scales it all
+st.markdown("<style>html { font-size: 18px; }</style>", unsafe_allow_html=True)
+
 # Replay pacing (spec UI-9): short "thinking" pause, then each step for its recorded duration, capped
 REPLAY_THINK_SECONDS = 0.8
 REPLAY_MAX_STEP_SECONDS = 1.5
