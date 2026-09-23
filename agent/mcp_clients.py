@@ -11,7 +11,7 @@ import sys
 from typing import Dict, List, Any, Optional
 from mcp import ClientSession, StdioServerParameters
 from mcp.client.stdio import stdio_client
-from mcp.client.sse import sse_client
+from mcp.client.streamable_http import streamablehttp_client
 
 class MCPClientManager:
     """Manages MCP connections and tool execution across servers."""
@@ -38,12 +38,12 @@ class MCPClientManager:
                 "args": [self.ontap_server_script]
             },
             "learn": {
-                "type": "sse",
+                "type": "http",
                 "url": "https://learn.microsoft.com/api/mcp",
                 "headers": {}
             },
             "github": {
-                "type": "sse",
+                "type": "http",
                 "url": "https://api.githubcopilot.com/mcp/",
                 "headers": {"Authorization": f"Bearer {self.github_pat}"} if self.github_pat else {}
             }
@@ -75,9 +75,9 @@ class MCPClientManager:
                                 "server": server_name
                             }
                             tools.append(tool_dict)
-            elif cfg["type"] == "sse":
-                # For remote SSE servers
-                async with sse_client(cfg["url"], headers=cfg["headers"]) as (read, write):
+            elif cfg["type"] == "http":
+                # Remote servers over Streamable HTTP (spec.md §2.3)
+                async with streamablehttp_client(cfg["url"], headers=cfg["headers"]) as (read, write, _):
                     async with ClientSession(read, write) as session:
                         await session.initialize()
                         res = await session.list_tools()
@@ -128,8 +128,8 @@ class MCPClientManager:
                     await session.initialize()
                     res = await session.call_tool(tool_name, arguments)
                     return {"content": res.content, "isError": res.isError}
-        elif cfg["type"] == "sse":
-            async with sse_client(cfg["url"], headers=cfg["headers"]) as (read, write):
+        elif cfg["type"] == "http":
+            async with streamablehttp_client(cfg["url"], headers=cfg["headers"]) as (read, write, _):
                 async with ClientSession(read, write) as session:
                     await session.initialize()
                     res = await session.call_tool(tool_name, arguments)

@@ -35,3 +35,10 @@ async def test_unreachable_server_resilience():
     assert discovery["servers"]["ontap"]["status"] == "online"
     assert discovery["servers"]["learn"]["status"] == "offline"
     assert len(discovery["all_tools"]) > 0
+
+@pytest.mark.asyncio
+async def test_learn_discovery_over_streamable_http():
+    """Learn MCP is reachable over Streamable HTTP (spec.md §2.3, CODE_REVIEW H3). Requires network."""
+    res = await MCPClientManager().get_server_tools("learn")
+    assert res["status"] == "online", res["error"]
+    assert any(t["original_name"] == "microsoft_docs_search" for t in res["tools"])
