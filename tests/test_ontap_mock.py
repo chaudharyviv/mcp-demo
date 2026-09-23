@@ -95,3 +95,27 @@ def test_resource_inventory_summary():
     assert summary["synthetic"] is True
     assert len(summary["clusters"]) == 2
     assert len(summary["aggregates"]) == 4
+
+@pytest.mark.asyncio
+@pytest.mark.parametrize("grow_by_gb, expect_error", [(0, True), (-5000, True), (5001, True), (1, False), (5000, False)])
+async def test_vol_resize_grow_bounds_enforced_over_mcp(grow_by_gb, expect_error):
+    """grow_by_gb must be 1-5000 when called through MCP; dataset unchanged either way (CODE_REVIEW H7)."""
+    from agent.mcp_clients import MCPClientManager
+    data_before = load_data()
+    result = await MCPClientManager().call_tool(
+        "ontap", "ontap_vol_resize",
+        {"volume": "vol_payments_db", "grow_by_gb": grow_by_gb, "change_id": "CHG0012345"}
+    )
+    assert bool(result["isError"]) is expect_error
+    if not expect_error:
+        assert json.loads(result["content"][0].text)["status"] == "dry_run"
+    assert load_data() == data_before
+
+@pytest.mark.asyncio
+async def test_tool_schemas_carry_bounds_and_descriptions():
+    """Pydantic Field bounds/descriptions reach the schema the model sees (CODE_REVIEW H7)."""
+    from agent.mcp_clients import MCPClientManager
+    tools = {t["name"]: t["inputSchema"] for t in (await MCPClientManager().get_server_tools("ontap"))["tools"]}
+    grow = tools["ontap_vol_resize"]["properties"]["grow_by_gb"]
+    assert grow["minimum"] == 1 and grow["maximum"] == 5000 and grow["description"]
+    assert tools["ontap_vol_show"]["properties"]["limit"]["minimum"] == 1

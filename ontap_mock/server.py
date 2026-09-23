@@ -5,8 +5,8 @@ Synthetic data only. All write tools are dry-run only.
 import json
 import re
 from pathlib import Path
-from typing import Optional, List, Dict, Any
-from pydantic import BaseModel, Field
+from typing import Annotated, Optional, List, Dict, Any
+from pydantic import Field
 from fastmcp import FastMCP
 
 # Path to synthetic dataset
@@ -43,14 +43,13 @@ def get_inventory_summary() -> str:
     }
     return json.dumps(summary, indent=2)
 
-class HealthSummaryInput(BaseModel):
-    cluster: Optional[str] = Field(default=None, description="Filter summary by cluster name (e.g. cls-alpha, cls-beta)")
-
 @mcp.tool(
     name="ontap_cluster_health_summary",
     description="Returns high-level health status, cluster/SVM/aggregate/volume counts, and detected issues across the ONTAP estate."
 )
-def ontap_cluster_health_summary(cluster: Optional[str] = None) -> Dict[str, Any]:
+def ontap_cluster_health_summary(
+    cluster: Annotated[Optional[str], Field(description="Filter summary by cluster name (e.g. cls-alpha, cls-beta)")] = None
+) -> Dict[str, Any]:
     data = load_data()
     clusters = data.get("clusters", [])
     aggregates = data.get("aggregates", [])
@@ -127,15 +126,14 @@ def ontap_cluster_health_summary(cluster: Optional[str] = None) -> Dict[str, Any
         "issues": issues
     }
 
-class AggrShowInput(BaseModel):
-    cluster: Optional[str] = Field(default=None, description="Filter by cluster name")
-    min_used_percent: Optional[int] = Field(default=None, description="Filter aggregates with used percentage >= this value (0-100)")
-
 @mcp.tool(
     name="ontap_aggr_show",
     description="Returns aggregate details sorted by used percentage descending."
 )
-def ontap_aggr_show(cluster: Optional[str] = None, min_used_percent: Optional[int] = None) -> Dict[str, Any]:
+def ontap_aggr_show(
+    cluster: Annotated[Optional[str], Field(description="Filter by cluster name")] = None,
+    min_used_percent: Annotated[Optional[int], Field(ge=0, le=100, description="Filter aggregates with used percentage >= this value (0-100)")] = None
+) -> Dict[str, Any]:
     data = load_data()
     aggregates = data.get("aggregates", [])
 
@@ -162,25 +160,17 @@ def ontap_aggr_show(cluster: Optional[str] = None, min_used_percent: Optional[in
         "aggregates": results
     }
 
-class VolShowInput(BaseModel):
-    cluster: Optional[str] = Field(default=None, description="Filter by cluster name")
-    svm: Optional[str] = Field(default=None, description="Filter by SVM name")
-    aggregate: Optional[str] = Field(default=None, description="Filter by aggregate name")
-    state: Optional[str] = Field(default=None, description="Filter by volume state (online/offline)")
-    name: Optional[str] = Field(default=None, description="Filter by volume name")
-    limit: int = Field(default=20, description="Max volumes to return")
-
 @mcp.tool(
     name="ontap_vol_show",
     description="Returns volume details matching filters."
 )
 def ontap_vol_show(
-    cluster: Optional[str] = None,
-    svm: Optional[str] = None,
-    aggregate: Optional[str] = None,
-    state: Optional[str] = None,
-    name: Optional[str] = None,
-    limit: int = 20
+    cluster: Annotated[Optional[str], Field(description="Filter by cluster name")] = None,
+    svm: Annotated[Optional[str], Field(description="Filter by SVM name")] = None,
+    aggregate: Annotated[Optional[str], Field(description="Filter by aggregate name")] = None,
+    state: Annotated[Optional[str], Field(description="Filter by volume state (online/offline)")] = None,
+    name: Annotated[Optional[str], Field(description="Filter by volume name")] = None,
+    limit: Annotated[int, Field(ge=1, description="Max volumes to return")] = 20
 ) -> Dict[str, Any]:
     data = load_data()
     volumes = data.get("volumes", [])
@@ -215,16 +205,15 @@ def ontap_vol_show(
         "volumes": results
     }
 
-class VolResizeInput(BaseModel):
-    volume: str = Field(description="Name of the volume to resize")
-    grow_by_gb: int = Field(description="Gigabytes to grow the volume by (1 to 5000)")
-    change_id: Optional[str] = Field(default=None, description="Required Change Request ID (format: CHG followed by 7 digits, e.g. CHG0012345)")
-
 @mcp.tool(
     name="ontap_vol_resize",
     description="Plans a volume resize operation (dry run only). Requires a valid Change Request ID."
 )
-def ontap_vol_resize(volume: str, grow_by_gb: int, change_id: Optional[str] = None) -> Dict[str, Any]:
+def ontap_vol_resize(
+    volume: Annotated[str, Field(description="Name of the volume to resize")],
+    grow_by_gb: Annotated[int, Field(ge=1, le=5000, description="Gigabytes to grow the volume by (1 to 5000)")],
+    change_id: Annotated[Optional[str], Field(description="Required Change Request ID (format: CHG followed by 7 digits, e.g. CHG0012345)")] = None
+) -> Dict[str, Any]:
     if not change_id:
         return {
             "synthetic": True,
