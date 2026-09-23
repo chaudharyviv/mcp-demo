@@ -28,8 +28,8 @@ async def test_ontap_tool_invocation_via_client():
 async def test_unreachable_server_resilience():
     """Verifies that an unreachable server returns status offline without failing discover_all_tools."""
     manager = MCPClientManager()
-    # Mock invalid URL for learn server to simulate network / unreachable failure
-    manager.servers_config["learn"]["url"] = "https://invalid.unreachable.endpoint/mcp"
+    # Closed local port: fails fast and deterministically, no DNS or internet needed (CODE_REVIEW M17)
+    manager.servers_config["learn"]["url"] = "http://127.0.0.1:9/mcp"
 
     discovery = await manager.discover_all_tools()
     assert discovery["servers"]["ontap"]["status"] == "online"
