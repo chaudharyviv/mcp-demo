@@ -2,12 +2,12 @@
   "chip_id": "3c",
   "chip_title": "3c · Approve",
   "prompt": "Change number is CHG0012345.",
-  "content": "Storage Volume Resize Plan (**Dry Run Only**):\n- **Volume**: `vol_payments_db` (SVM: `svm_core`)\n- **Size Change**: 6.0 TiB → **6.2 TiB** (+200 GB)\n- **Aggregate Impact**: `aggr_a01` projected used capacity **91.9%** (remains above 90% threshold).\n- **Recommendation**: Consider moving the volume to a less-used aggregate such as **`aggr_a02`** (55% used).\n- **Execution Status**: `executed: false` (No storage changes were performed).",
+  "content": "The dry-run plan for resizing the volume **vol_payments_db** shows a current size of **6.0 TiB** and a new size of **6.2 TiB** after a **200 GB** increase. However, the aggregate **aggr_a01** will remain above **90%** capacity (projected at **92%**). It's recommended to consider moving the volume to a less-used aggregate like **aggr_a02**. **Nothing was executed.**",
   "trace": [
     {
       "event": "tool_started",
-      "server": "ontap",
       "tool": "ontap_vol_resize",
+      "server": "ontap",
       "args": {
         "volume": "vol_payments_db",
         "grow_by_gb": 200,
@@ -16,11 +16,11 @@
     },
     {
       "event": "tool_finished",
-      "server": "ontap",
       "tool": "ontap_vol_resize",
-      "duration": 0.31,
+      "server": "ontap",
+      "duration": 1.81,
       "status": "success",
-      "result": "{\"synthetic\": true, \"status\": \"dry_run\", \"executed\": false, \"change_id\": \"CHG0012345\", \"plan\": {\"projected_aggregate_used_percent\": 91.9}}"
+      "result": "{\"synthetic\": true, \"status\": \"dry_run\", \"executed\": false, \"change_id\": \"CHG0012345\", \"plan\": {\"volume\": \"vol_payments_db\", \"current_size_bytes\": 6597069766656, \"new_size_bytes\": 6811818131456, \"curr"
     }
   ]
 }

@@ -2,7 +2,7 @@
   "chip_id": "3a",
   "chip_title": "3a · Health",
   "prompt": "How healthy is our storage estate? Anything I should worry about?",
-  "content": "The health summary of your storage estate indicates some critical issues:\n\n- **Critical**: Aggregate **aggr_a01** is at **91.0%** capacity, which is critical.\n- **Warning**: Volume **vol_payments_db** is **94.0%** full, nearing capacity.\n- **Warning**: Volume **vol_reports** has snapshot space overrun (18.0% used vs. 5% reserve).\n- **Critical**: Volume **vol_legacy_ftp** is currently **offline**.\n\nYou should address the critical aggregate capacity and the offline volume immediately.",
+  "content": "The storage estate has **2 clusters**, **4 aggregates**, and **14 volumes**. However, there are critical issues to address: the aggregate **aggr_a01** is at **91.0%** capacity, and the volume **vol_legacy_ftp** is currently **offline**. Additionally, the volume **vol_payments_db** is **94.0%** full, and **vol_reports** has a snapshot space overrun (18.0% used vs. 5% reserve). Immediate attention is recommended for these issues.",
   "trace": [
     {
       "event": "tool_started",
@@ -14,7 +14,7 @@
       "event": "tool_finished",
       "tool": "ontap_cluster_health_summary",
       "server": "ontap",
-      "duration": 1.82,
+      "duration": 1.91,
       "status": "success",
       "result": "{\"synthetic\": true, \"counts\": {\"clusters\": 2, \"aggregates\": 4, \"volumes\": 14}, \"issues\": [{\"severity\": \"critical\", \"object_type\": \"aggregate\", \"object_name\": \"aggr_a01\", \"message\": \"Aggregate capacity"
     }

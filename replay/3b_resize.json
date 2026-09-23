@@ -2,6 +2,6 @@
   "chip_id": "3b",
   "chip_title": "3b · Resize",
   "prompt": "Grow the payments database volume by 200 GB.",
-  "content": "Please provide a Change Request number in the format `CHG` followed by 7 digits (e.g., `CHG0012345`) to proceed with the volume resize operation for the payments database.",
+  "content": "Please provide a Change Request number in the format `CHG` followed by 7 digits (e.g., `CHG0012345`) to proceed with the volume resize operation.",
   "trace": []
 }

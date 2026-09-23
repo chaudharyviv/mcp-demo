@@ -46,7 +46,7 @@ def test_all_chips_acceptance_criteria():
     assert "Change Request" in r3b["content"] or "CHG" in r3b["content"]
 
     r3c = ReplayManager.get_replay_by_chip_id("3c")
-    assert "executed: false" in r3c["content"].lower() or "no storage changes" in r3c["content"].lower()
+    assert "nothing was executed" in r3c["content"].lower()
     assert "aggr_a02" in r3c["content"]
 
 def test_llm_failure_offers_working_replay_fallback(monkeypatch):
