@@ -155,3 +155,38 @@ async def test_openai_retry_only_on_5xx_and_429(status, expected_calls):
         with pytest.raises(Exception):
             await agent._call_openai_with_retry([], None)
     assert agent.client.chat.completions.create.await_count == expected_calls
+
+def _agent_with_one_tool_call(tool_name: str, tools: list, call_result=None):
+    """AgentLoop whose model requests one tool call, then answers 'done'."""
+    manager = MagicMock()
+    manager.discover_all_tools = AsyncMock(return_value={"all_tools": tools})
+    manager.call_tool = AsyncMock(return_value=call_result or {"content": [], "isError": False})
+    agent = AgentLoop(api_key="mock-key", mcp_manager=manager)
+    tool_call = MagicMock()
+    tool_call.id = "call_1"
+    tool_call.function.name = tool_name
+    tool_call.function.arguments = "{}"
+    msg_1 = MagicMock(tool_calls=[tool_call])
+    msg_1.model_dump.return_value = {"role": "assistant", "tool_calls": []}
+    msg_2 = MagicMock(tool_calls=None, content="done")
+    agent.client = MagicMock()
+    agent.client.chat.completions.create = AsyncMock(side_effect=[
+        MagicMock(choices=[MagicMock(message=msg_1)]),
+        MagicMock(choices=[MagicMock(message=msg_2)]),
+    ])
+    return agent, manager
+
+ONTAP_HEALTH_TOOL = {"name": "ontap_cluster_health_summary", "description": "", "inputSchema": {"type": "object", "properties": {}}, "server": "ontap"}
+
+@pytest.mark.asyncio
+async def test_tool_is_error_traced_as_failure():
+    """isError from the MCP server shows as ✗ in the trace (CODE_REVIEW M4)."""
+    from mcp.types import TextContent
+    agent, _ = _agent_with_one_tool_call(
+        "ontap_cluster_health_summary", [ONTAP_HEALTH_TOOL],
+        {"content": [TextContent(type="text", text="validation error")], "isError": True}
+    )
+    events = []
+    await agent.run_turn([{"role": "user", "content": "q"}], trace_callback=events.append)
+    assert events[-1]["event"] == "tool_failed"
+    assert events[-1]["status"] == "error" and "validation error" in events[-1]["error"]

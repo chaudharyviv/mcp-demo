@@ -135,15 +135,17 @@ class AgentLoop:
                     duration = time.time() - tool_start
 
                     content_str = content_to_text(tool_result.get("content", ""))
+                    # The server can report failure in-band (e.g. input validation); trace it as ✗
+                    failed = bool(tool_result.get("isError"))
 
                     if trace_callback:
                         trace_callback({
-                            "event": "tool_finished",
+                            "event": "tool_failed" if failed else "tool_finished",
                             "tool": func_name,
                             "server": server_name,
                             "duration": round(duration, 2),
-                            "status": "success",
-                            "result": content_str[:200]
+                            "status": "error" if failed else "success",
+                            "error" if failed else "result": content_str[:200]
                         })
 
                     conversation.append({
