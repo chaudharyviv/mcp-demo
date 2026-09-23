@@ -65,6 +65,14 @@ Decisions that refine (not change) the docs. Anything that changes `docs/` needs
 
 ## 7. Session log (newest first)
 
+### 2026-09-23 — Kiro — Recovery (No interruption detected)
+- Assessment: Checked git log, tags, stash, and test suite. All work from Antigravity (M1–M6) is properly committed and tagged (`m1-done` through `m6-done`). No stash with interrupted work. No uncommitted changes (except untracked `claude.md` note file). Current HEAD: `318c19a` (M7 steering + docs setup by Kiro).
+- Tests: 24 passed in 8.97s (all M1–M6 tests continue to pass)
+- Findings: No recovery needed; project in clean state. Kiro session properly completed M7 setup (steering files, rehearsal documentation). One untracked file (`claude.md` handoff note) should be committed.
+- Files touched: None (recovery/assessment only)
+- Recommendation: Commit `claude.md`, then proceed with M7 live rehearsals using M7 Rehearsal Script template.
+- Next step: (1) Commit `claude.md` as documentation. (2) Performer conducts 5+ timed rehearsals on Streamlit Cloud. (3) Document results and tag `m7-done`.
+
 ### 2026-09-23 — Kiro — M7 (Handoff & Setup)
 - Done: Created steering files from AGENTS.md §3–5 (`.kiro/steering/product.md`, `tech.md`, `structure.md`). Generated Kiro spec for M7 with 9-task workflow. Created comprehensive M7 Rehearsal Script template with per-chip acceptance criteria, timing capture, and aggregate results log. Verified all 24 M6 tests still passing. Verified secrets handling (OPENAI_API_KEY, GITHUB_PAT) properly configured via environment or st.secrets, never committed.
 - Tests: 24 passed

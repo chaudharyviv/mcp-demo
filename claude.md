@@ -1,0 +1,1 @@
+Read AGENTS.md first and follow it strictly. Then read PROGRESS.md and docs/. Other AI tools built earlier parts of this repo; extend their work, don't restructure it.
