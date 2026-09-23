@@ -36,5 +36,5 @@ def render_landing_panel(on_start_click):
         """)
 
     st.write("")
-    if st.button("🚀 Start Demo", type="primary", use_container_width=True):
-        on_start_click()
+    # on_click runs before the rerun, so the chips appear on the first click
+    st.button("🚀 Start Demo", type="primary", use_container_width=True, on_click=on_start_click)

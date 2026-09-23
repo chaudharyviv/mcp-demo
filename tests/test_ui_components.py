@@ -25,3 +25,12 @@ def test_prompt_chips_spec_mapping():
     assert "storage estate" in prompts["3a"]
     assert "payments database" in prompts["3b"]
     assert "CHG0012345" in prompts["3c"]
+
+def test_start_demo_single_click_shows_chips():
+    """One click on Start Demo must show the chip row immediately (CODE_REVIEW H5)."""
+    from streamlit.testing.v1 import AppTest
+    at = AppTest.from_file("app.py", default_timeout=90).run()
+    assert not at.exception
+    at.button[[b.label for b in at.button].index("🚀 Start Demo")].click().run()
+    labels = [b.label for b in at.button]
+    assert "3a · Health" in labels and "🚀 Start Demo" not in labels
