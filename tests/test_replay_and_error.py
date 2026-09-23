@@ -27,13 +27,13 @@ def test_replay_by_prompt_mapping():
     r3c = ReplayManager.get_replay_by_prompt("Change number is CHG0012345.")
     assert r3c is not None and r3c["chip_id"] == "3c"
 
-def test_all_chips_acceptance_criteria():
-    """Verifies acceptance criteria for each chip per docs/spec.md §5."""
+def test_replay_fixtures_content():
+    """Recorded replays contain the key facts from spec.md §5. Checks fixtures only; live acceptance is the M7 rehearsal log."""
     r1 = ReplayManager.get_replay_by_chip_id("1")
     assert "learn.microsoft.com" in r1["content"]
 
     r2 = ReplayManager.get_replay_by_chip_id("2")
-    assert "payments_db" in r2["content"] or "urgent" in r2["content"].lower()
+    assert "urgent" in r2["content"].lower()
 
     r3a = ReplayManager.get_replay_by_chip_id("3a")
     assert "aggr_a01" in r3a["content"]
