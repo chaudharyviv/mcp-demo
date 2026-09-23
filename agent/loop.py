@@ -121,9 +121,12 @@ class AgentLoop:
 
                 # Determine server
                 server_name = "ontap"
+                server_tool_name = func_name
                 for tool in tools_list:
                     if tool["name"] == func_name:
                         server_name = tool.get("server", "ontap")
+                        # Remote tools are namespaced for the model; the server expects its own name
+                        server_tool_name = tool.get("original_name", func_name)
                         break
 
                 if trace_callback:
@@ -136,7 +139,7 @@ class AgentLoop:
 
                 tool_start = time.time()
                 try:
-                    tool_result = await self.mcp_manager.call_tool(server_name, func_name, func_args)
+                    tool_result = await self.mcp_manager.call_tool(server_name, server_tool_name, func_args)
                     duration = time.time() - tool_start
 
                     content_str = content_to_text(tool_result.get("content", ""))

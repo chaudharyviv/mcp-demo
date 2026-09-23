@@ -97,3 +97,35 @@ async def test_real_mcp_content_converts_to_text():
     result = await MCPClientManager().call_tool("ontap", "ontap_cluster_health_summary", {})
     text = content_to_text(result["content"])
     assert json.loads(text)["synthetic"] is True
+
+@pytest.mark.asyncio
+async def test_namespaced_remote_tool_called_by_original_name():
+    """Model sees learn_* names; the Learn server must receive its own tool name (CODE_REVIEW H4)."""
+    mock_mcp_manager = MagicMock()
+    mock_mcp_manager.discover_all_tools = AsyncMock(return_value={
+        "all_tools": [{
+            "name": "learn_microsoft_docs_search",
+            "original_name": "microsoft_docs_search",
+            "description": "Search docs",
+            "inputSchema": {"type": "object", "properties": {}},
+            "server": "learn"
+        }]
+    })
+    mock_mcp_manager.call_tool = AsyncMock(return_value={"content": [], "isError": False})
+    agent = AgentLoop(api_key="mock-key", mcp_manager=mock_mcp_manager)
+
+    tool_call = MagicMock()
+    tool_call.id = "call_1"
+    tool_call.function.name = "learn_microsoft_docs_search"
+    tool_call.function.arguments = '{"query": "storage"}'
+    msg_1 = MagicMock(tool_calls=[tool_call])
+    msg_1.model_dump.return_value = {"role": "assistant", "tool_calls": []}
+    msg_2 = MagicMock(tool_calls=None, content="done")
+    agent.client = MagicMock()
+    agent.client.chat.completions.create = AsyncMock(side_effect=[
+        MagicMock(choices=[MagicMock(message=msg_1)]),
+        MagicMock(choices=[MagicMock(message=msg_2)]),
+    ])
+
+    await agent.run_turn([{"role": "user", "content": "q"}])
+    mock_mcp_manager.call_tool.assert_awaited_once_with("learn", "microsoft_docs_search", {"query": "storage"})
