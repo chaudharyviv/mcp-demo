@@ -65,6 +65,16 @@ Decisions that refine (not change) the docs. Anything that changes `docs/` needs
 
 ## 7. Session log (newest first)
 
+### 2026-09-23 — Claude Code — HIGH fixes from CODE_REVIEW.md
+- Done: Fixed H1–H9 from `CODE_REVIEW.md`, one commit each (`90def10`…`139369c`), with a regression test per fix. H10 partially fixed (`8cb0dab`): replays for chips 1, 3a, 3b re-recorded from real live runs. Status table added to `CODE_REVIEW.md`.
+- Tests: 37 passed (was 24). New tests include AppTest checks for Start Demo and the replay fallback, plus MCP-level input-bound tests. Some tests need network (Learn discovery).
+- Live check: with real OpenAI + Learn + ONTAP, chips 1, 3a, 3b pass spec §5. Health now returns exactly the 4 expected issues.
+- Files touched: `requirements.txt`, `agent/loop.py`, `agent/mcp_clients.py`, `agent/system_prompt.md`, `ui/landing.py`, `app.py`, `ontap_mock/server.py`, `ontap_mock/data/estate.json`, `replay/1_docs.json`, `replay/3a_health.json`, `replay/3b_resize.json`, `tests/*`, `CODE_REVIEW.md`, `PROGRESS.md`
+- Issues found: **N1 (HIGH, open):** the live 3c answer shows the correct dry-run plan but doesn't say nothing was executed, so it fails spec §5 3c. A prompt tweak is needed before re-recording 3c. **Chip 2** is still unverified and not re-recorded (no `GITHUB_PAT` here). MEDIUM/LOW findings are still open, pending owner approval.
+- Not pushed: the repo has no git remote configured.
+- Next step (one concrete action): Approve the N1 prompt tweak (rule 4 in `agent/system_prompt.md`), then re-record chip 3c; set `GITHUB_PAT` + `GITHUB_DEMO_REPO` and re-record chip 2.
+- Credits left (approx.): N/A
+
 ### 2026-09-23 — Claude Code — Code quality review (review only)
 - Done: Full code quality review of `ontap_mock/`, `agent/`, `ui/` + `app.py`, `tests/`, config files against AGENTS.md and docs/. Report written to `CODE_REVIEW.md` (10 HIGH, 17 MEDIUM, 12 LOW findings; "Do NOT change" list; top 5 fixes). No application code changed.
 - Tests: 24 passed (unchanged code). Probes reproduced: `fastmcp==0.9.2` in `requirements.txt` does not exist on PyPI; live tool results fail `json.dumps` (TextContent); SSE transport fails against Learn while Streamable HTTP works; health summary returns 6 issues (spurious snapshot warnings on `vol_app_bin`, `vol_test_clone`); `grow_by_gb` 0 / negative accepted.

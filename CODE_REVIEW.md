@@ -8,6 +8,34 @@ The ONTAP mock server and the resize guardrail itself are sound: refusals come b
 
 Verification method: read all code against docs/, ran `pytest` (24 passed), and ran direct probes: tool edge cases, `MCPClientManager.call_tool` output types, SSE vs Streamable HTTP against `learn.microsoft.com/api/mcp`, and `pip index versions fastmcp`.
 
+## Fix status (updated 2026-09-23, after HIGH-fix pass)
+
+Only HIGH findings were fixed, one commit each, with the full suite run after each fix (24 → **37 passed**). MEDIUM/LOW items are still **open** and wait on owner approval. A few were resolved as a direct side effect of a HIGH fix and are marked as such below. After the fixes, a live run (real OpenAI + Learn + ONTAP) passed chips 1, 3a and 3b end to end.
+
+| ID | Status | Commit | Notes |
+|---|---|---|---|
+| H1 | ✅ Fixed | `90def10` | Pinned to PROGRESS §3 versions, plus `mcp==1.12.4` and `pytest-asyncio==0.24.0`. `pip install --dry-run` resolves cleanly. |
+| H2 | ✅ Fixed | `9339766` | New `content_to_text()` in agent/loop.py. Test uses real client output (not a mock). |
+| H3 | ✅ Fixed | `dbd7fa9` | `streamablehttp_client` for Learn/GitHub. Network test confirms Learn is online with 3 tools. GitHub is untested (no PAT here). |
+| H4 | ✅ Fixed | `8b06bb1` | Loop calls `original_name`. Routing test added. Confirmed live: `microsoft_docs_search` succeeds. |
+| H5 | ✅ Fixed | `d03bca3` | `on_click` on Start Demo. The AppTest fails on the old code and passes on the new. |
+| H6 | ✅ Fixed | `b7ed724` | Loop re-raises LLM errors. App shows a friendly error, and the fallback button (`on_click`) appends the recorded answer. The AppTest fails on the old code and passes on the new. |
+| H7 | ✅ Fixed | `69c6298` | `Annotated[..., Field(...)]` on all tool params (grow 1–5000, min_used 0–100, limit ≥ 1), and the unused model classes are removed. Enforced at the MCP protocol level: direct Python calls bypass it, but the app only calls through MCP. Tests go through the real stdio client. |
+| H8 | ✅ Fixed | `8522ff7` | `snapshot.used` for `vol_app_bin` and `vol_test_clone` is now 164926744166 (5% of 3 TiB). Footprint sums are unchanged. Exact-set health test added. |
+| H9 | ✅ Fixed | `139369c` | Rule 7 in `system_prompt.md` has a `{GITHUB_DEMO_REPO}` placeholder, filled from env or `st.secrets` (falls back to "(not configured)"). |
+| H10 | 🟨 Partial | `8cb0dab` | Chips 1, 3a and 3b re-recorded from real runs. **Chip 2** is not recorded (no `GITHUB_PAT` in this environment), so it still has the invented issues. **Chip 3c** is not recorded because the live answer fails acceptance (see N1). |
+| N1 | 🆕 HIGH, open | n/a | **Found while re-recording H10.** The live chip 3c answer gives the correct plan (92.0%, `aggr_a02` warning) but **never states that nothing was executed** (spec §5 3c), and it shows sizes in raw bytes. The prompt needs tuning, e.g. rule 4: "When presenting a dry-run plan, show sizes in TiB and end with: *Nothing was executed.*" Then re-record 3c. Not fixed, since it's outside the approved list. |
+| N2 | 🆕 LOW, open | n/a | The live chip 3a answer doesn't mention that the data is synthetic (prompt rule 3). It still passes spec §5 3a. Could be handled in the same prompt pass as N1. |
+| M1–M13 | ⬜ Open | n/a | Not touched. |
+| M14 | 🟨 Partly covered | `9339766`, `8b06bb1` | Regression tests for H2 (real `TextContent`) and H4 (routing) were added. The original mock in `test_agent_loop_with_mocked_openai` is unchanged. |
+| M15 | ✅ Resolved via H8 | `8522ff7` | The exact-set health test was H8's regression test. |
+| M16 | 🟨 Partly covered | `69c6298` | `grow_by_gb` bounds and "dataset unchanged" after rejected calls are covered. Unknown volume and whitespace `change_id` are still untested. |
+| M17 | 🟨 Partly covered | `dbd7fa9` | Learn discovery test added (needs network). The unreachable-server test still relies on DNS. |
+| L1–L5, L7–L12 | ⬜ Open | n/a | Not touched. The `BaseModel` import is gone (part of H7), but the unused `List` import remains (L4). |
+| L6 | ✅ Resolved via H7 | `69c6298` | `limit` now has `ge=1`, so `limit=0` is rejected. |
+
+"Do NOT change" list: all items were respected. The refusal order, `load_data()` per call, `sys.executable` launch, per-turn sessions and dataset byte values are unchanged, apart from the two `snapshot.used` values H8 called for.
+
 ## Findings
 
 Severity: **HIGH** = could break or embarrass the live demo, or violates an AGENTS.md hard rule · **MEDIUM** = robustness/maintainability risk · **LOW** = style/polish.
