@@ -39,8 +39,10 @@ async def test_agent_loop_with_mocked_openai():
             }
         ]
     })
+    # Same shape the real MCP client returns: a list of TextContent objects (CODE_REVIEW M14)
+    from mcp.types import TextContent
     mock_mcp_manager.call_tool = AsyncMock(return_value={
-        "content": [{"type": "text", "text": "Health OK"}],
+        "content": [TextContent(type="text", text="Health OK")],
         "isError": False
     })
 
@@ -88,6 +90,8 @@ async def test_agent_loop_with_mocked_openai():
     assert len(trace_events) == 2
     assert trace_events[0]["event"] == "tool_started"
     assert trace_events[1]["event"] == "tool_finished"
+    tool_messages = [m for m in result["messages"] if m.get("role") == "tool"]
+    assert tool_messages[0]["content"] == "Health OK"
 
 @pytest.mark.asyncio
 async def test_real_mcp_content_converts_to_text():
