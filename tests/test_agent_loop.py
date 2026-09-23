@@ -190,3 +190,12 @@ async def test_tool_is_error_traced_as_failure():
     await agent.run_turn([{"role": "user", "content": "q"}], trace_callback=events.append)
     assert events[-1]["event"] == "tool_failed"
     assert events[-1]["status"] == "error" and "validation error" in events[-1]["error"]
+
+@pytest.mark.asyncio
+async def test_unknown_tool_not_routed_to_ontap():
+    """A hallucinated tool name returns an error to the model and calls no server (CODE_REVIEW M5)."""
+    agent, manager = _agent_with_one_tool_call("made_up_tool", [ONTAP_HEALTH_TOOL])
+    events = []
+    await agent.run_turn([{"role": "user", "content": "q"}], trace_callback=events.append)
+    manager.call_tool.assert_not_awaited()
+    assert events[-1]["event"] == "tool_failed" and "Unknown tool" in events[-1]["error"]

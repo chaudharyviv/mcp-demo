@@ -112,14 +112,29 @@ class AgentLoop:
                     func_args = {}
 
                 # Determine server
-                server_name = "ontap"
-                server_tool_name = func_name
-                for tool in tools_list:
-                    if tool["name"] == func_name:
-                        server_name = tool.get("server", "ontap")
-                        # Remote tools are namespaced for the model; the server expects its own name
-                        server_tool_name = tool.get("original_name", func_name)
-                        break
+                tool_info = next((t for t in tools_list if t["name"] == func_name), None)
+                if tool_info is None:
+                    # Model asked for a tool no server offers; tell it rather than guessing a server
+                    error = f"Unknown tool '{func_name}'. Use only the tools provided."
+                    if trace_callback:
+                        trace_callback({
+                            "event": "tool_failed",
+                            "tool": func_name,
+                            "server": "unknown",
+                            "duration": 0.0,
+                            "status": "error",
+                            "error": error
+                        })
+                    conversation.append({
+                        "role": "tool",
+                        "tool_call_id": tool_call.id,
+                        "name": func_name,
+                        "content": json.dumps({"error": error})
+                    })
+                    continue
+                server_name = tool_info.get("server", "ontap")
+                # Remote tools are namespaced for the model; the server expects its own name
+                server_tool_name = tool_info.get("original_name", func_name)
 
                 if trace_callback:
                     trace_callback({
