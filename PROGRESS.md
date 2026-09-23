@@ -6,17 +6,17 @@
 ## 1. Current state (keep this section short and current)
 
 - **Active tool:** _Antigravity_
-- **Current milestone:** _M2 — MCP client layer_
-- **Last good commit / tag:** _64a3da9 / m1-done_
-- **Tests:** _9 passed in 2.00s_
-- **Current state → Next step:** _Build agent/mcp_clients.py multi-server MCP client connecting Learn, GitHub, and Mock ONTAP servers._
+- **Current milestone:** _M3 — Agent loop on GPT-4o mini_
+- **Last good commit / tag:** _0d28016 / m2-done_
+- **Tests:** _12 passed in 9.48s_
+- **Current state → Next step:** _Implement agent/loop.py agent loop on GPT-4o mini with system_prompt.md and trace event emission._
 
 ## 2. Milestone status
 
 | ID | Milestone | Status | Tag | Built with | Notes |
 |---|---|---|---|---|---|
 | M1 | Mock ONTAP dataset + FastMCP server (4 tools, 1 resource) + tests | ✅ Done | m1-done | Antigravity | 9/9 tests pass |
-| M2 | MCP client layer (Learn, GitHub, ONTAP) | 🟨 In progress | | | |
+| M2 | MCP client layer (Learn, GitHub, ONTAP) | ✅ Done | m2-done | Antigravity | 12/12 tests pass |
 | M3 | Agent loop on GPT-4o mini | ⬜ Not started | | | |
 | M4 | Streamlit UI (landing, sidebar, chips, trace, closing card) | ⬜ Not started | | | |
 | M5 | Replay mode, reset, error handling, prompt tuning | ⬜ Not started | | | |
@@ -64,6 +64,15 @@ Decisions that refine (not change) the docs. Anything that changes `docs/` needs
 |---|---|---|---|---|
 
 ## 7. Session log (newest first)
+
+### 2026-09-23 — Antigravity — M2
+- Done: Implemented `agent/mcp_clients.py` client layer supporting stdio ONTAP (`sys.executable`), Learn HTTP, and GitHub HTTP MCP endpoints with per-server fault tolerance. Built `tests/test_mcp_clients.py`.
+- Tests: 12 passed
+- Files touched: `agent/__init__.py`, `agent/mcp_clients.py`, `tests/test_mcp_clients.py`, `requirements.txt`, `PROGRESS.md`
+- Commit / tag: `0d28016` / `m2-done`
+- Issues found: None
+- Next step (one concrete action): Implement `agent/loop.py` agent loop on GPT-4o mini with `system_prompt.md` and trace event emission.
+- Credits left (approx.): N/A
 
 ### 2026-09-23 — Antigravity — M1
 - Done: Created requirements.txt with pinned dependencies, synthetic dataset (`ontap_mock/data/estate.json`), FastMCP server with 4 tools & 1 resource (`ontap_mock/server.py`), and test suite (`tests/test_ontap_mock.py`).
