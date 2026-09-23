@@ -143,3 +143,19 @@ def test_vol_resize_rejects_near_miss_change_ids(change_id):
     result = ontap_vol_resize(volume="vol_payments_db", grow_by_gb=200, change_id=change_id)
     assert result["status"] == "refused" and result["synthetic"] is True
     assert load_data() == data_before
+
+@pytest.mark.parametrize("query, expected", [
+    ("payments database", "vol_payments_db"),
+    ("vol_payment_db", "vol_payments_db"),
+    ("vol_legacy_ftpp", "vol_legacy_ftp"),
+])
+def test_vol_resize_unknown_volume_suggests_close_matches(query, expected):
+    """Unknown volume -> status error with actionable close matches (AGENTS §5, CODE_REVIEW M10)."""
+    result = ontap_vol_resize(volume=query, grow_by_gb=200, change_id="CHG0012345")
+    assert result["status"] == "error" and result["synthetic"] is True
+    assert expected in result["close_matches"]
+    assert expected in result["message"]
+
+def test_vol_resize_unknown_volume_no_match_gives_next_step():
+    result = ontap_vol_resize(volume="zzz", grow_by_gb=200, change_id="CHG0012345")
+    assert result["close_matches"] == [] and "ontap_vol_show" in result["message"]

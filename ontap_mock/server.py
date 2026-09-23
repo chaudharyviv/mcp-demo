@@ -2,6 +2,7 @@
 Mock NetApp ONTAP FastMCP Server.
 Synthetic data only. All write tools are dry-run only.
 """
+import difflib
 import json
 import re
 from pathlib import Path
@@ -17,6 +18,18 @@ def load_data() -> Dict[str, Any]:
         return json.load(f)
 
 mcp = FastMCP("Mock NetApp ONTAP MCP Server")
+
+def close_matches(query: str, names: List[str], limit: int = 3) -> List[str]:
+    """Names similar to query: fuzzy spelling matches plus shared words ("payments database" -> vol_payments_db)."""
+    query_lower = query.lower()
+    fuzzy = difflib.get_close_matches(query_lower, [n.lower() for n in names], n=limit, cutoff=0.6)
+    fuzzy = [n for n in names if n.lower() in fuzzy]
+    # Word overlap, ignoring tokens every name shares (e.g. the "vol" prefix)
+    tokens = [set(n.lower().split("_")) for n in names]
+    common = set.intersection(*tokens) if tokens else set()
+    words = {w for w in re.split(r"[^a-z0-9]+", query_lower) if len(w) >= 3} - common
+    by_word = [n for n, t in zip(names, tokens) if words & t]
+    return list(dict.fromkeys(fuzzy + by_word))[:limit]
 
 @mcp.resource("ontap://inventory/summary")
 def get_inventory_summary() -> str:
@@ -234,11 +247,12 @@ def ontap_vol_resize(
     target_vol = next((v for v in volumes if v["name"] == volume), None)
 
     if not target_vol:
-        matches = [v["name"] for v in volumes if volume.lower() in v["name"].lower()]
+        matches = close_matches(volume, [v["name"] for v in volumes])
+        hint = f" Did you mean: {', '.join(matches)}?" if matches else " Use ontap_vol_show to list volumes."
         return {
             "synthetic": True,
             "status": "error",
-            "message": f"Volume '{volume}' not found.",
+            "message": f"Volume '{volume}' not found.{hint}",
             "close_matches": matches
         }
 
