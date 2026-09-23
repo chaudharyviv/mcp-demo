@@ -7,9 +7,9 @@
 
 - **Active tool:** _Antigravity_
 - **Current milestone:** _M3 — Agent loop on GPT-4o mini_
-- **Last good commit / tag:** _0d28016 / m2-done_
+- **Last good commit / tag:** _7aa4037 / m2-done_
 - **Tests:** _12 passed in 9.48s_
-- **Current state → Next step:** _Implement agent/loop.py agent loop on GPT-4o mini with system_prompt.md and trace event emission._
+- **Current state → Next step:** _Create agent/system_prompt.md, implement agent/loop.py, and build test suite in tests/test_agent_loop.py._
 
 ## 2. Milestone status
 
@@ -17,7 +17,7 @@
 |---|---|---|---|---|---|
 | M1 | Mock ONTAP dataset + FastMCP server (4 tools, 1 resource) + tests | ✅ Done | m1-done | Antigravity | 9/9 tests pass |
 | M2 | MCP client layer (Learn, GitHub, ONTAP) | ✅ Done | m2-done | Antigravity | 12/12 tests pass |
-| M3 | Agent loop on GPT-4o mini | ⬜ Not started | | | |
+| M3 | Agent loop on GPT-4o mini | 🟨 In progress | | | |
 | M4 | Streamlit UI (landing, sidebar, chips, trace, closing card) | ⬜ Not started | | | |
 | M5 | Replay mode, reset, error handling, prompt tuning | ⬜ Not started | | | |
 | M6 | Deploy to Streamlit Cloud + backup deployment | ⬜ Not started | | | |
