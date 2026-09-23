@@ -10,6 +10,7 @@ from agent.loop import AgentLoop
 from replay.manager import ReplayManager
 from ui.landing import render_landing_panel
 from ui.sidebar import render_sidebar
+from ui.chips import DEMO_CHIPS
 from ui.closing_card import render_closing_card
 from ui.trace import LiveTraceWriter, render_trace_log
 
@@ -76,35 +77,18 @@ st.title("🔌 MCP Live Demo")
 if not st.session_state.demo_started:
     render_landing_panel(on_start_click=lambda: st.session_state.update(demo_started=True))
 else:
-    # Chips Row
+    # Chips Row (prompts from ui/chips.py, spec.md §5)
     st.markdown("### Demo Prompts")
-    col1, col2, col3, col4, col5, col6 = st.columns(6)
+    chip_cols = st.columns(len(DEMO_CHIPS) + 1)
 
     selected_prompt = None
-    chip_id = None
     is_wrap_up = False
 
-    with col1:
-        if st.button("1 · Docs", use_container_width=True):
-            selected_prompt = "How do I restrict public network access to an Azure Storage account? Give me the key steps and the official doc link."
-            chip_id = "1"
-    with col2:
-        if st.button("2 · GitHub", use_container_width=True):
-            selected_prompt = "Summarise the open issues in our demo repo and tell me which one looks most urgent."
-            chip_id = "2"
-    with col3:
-        if st.button("3a · Health", use_container_width=True):
-            selected_prompt = "How healthy is our storage estate? Anything I should worry about?"
-            chip_id = "3a"
-    with col4:
-        if st.button("3b · Resize", use_container_width=True):
-            selected_prompt = "Grow the payments database volume by 200 GB."
-            chip_id = "3b"
-    with col5:
-        if st.button("3c · Approve", use_container_width=True):
-            selected_prompt = "Change number is CHG0012345."
-            chip_id = "3c"
-    with col6:
+    for col, (_, label, prompt) in zip(chip_cols, DEMO_CHIPS):
+        with col:
+            if st.button(label, use_container_width=True):
+                selected_prompt = prompt
+    with chip_cols[-1]:
         if st.button("Wrap up", use_container_width=True):
             is_wrap_up = True
 

@@ -11,20 +11,19 @@ def test_ui_imports_and_structure():
     assert callable(render_closing_card)
     assert callable(render_trace_log)
 
-def test_prompt_chips_spec_mapping():
-    """Verifies prompt text matches spec.md §5."""
-    prompts = {
-        "1": "How do I restrict public network access to an Azure Storage account? Give me the key steps and the official doc link.",
-        "2": "Summarise the open issues in our demo repo and tell me which one looks most urgent.",
-        "3a": "How healthy is our storage estate? Anything I should worry about?",
-        "3b": "Grow the payments database volume by 200 GB.",
-        "3c": "Change number is CHG0012345."
-    }
-    assert "Azure Storage" in prompts["1"]
-    assert "open issues" in prompts["2"]
-    assert "storage estate" in prompts["3a"]
-    assert "payments database" in prompts["3b"]
-    assert "CHG0012345" in prompts["3c"]
+def test_chip_prompts_match_spec():
+    """Every chip prompt used by app.py appears verbatim in docs/spec.md §5, in order (CODE_REVIEW L1)."""
+    from pathlib import Path
+    from ui.chips import DEMO_CHIPS
+    spec = (Path(__file__).parent.parent / "docs" / "spec.md").read_text(encoding="utf-8")
+    positions = [spec.index(f"| `{label}` | \"{prompt}\"") for _, label, prompt in DEMO_CHIPS]
+    assert positions == sorted(positions)
+
+def test_chip_prompts_map_to_their_replays():
+    from ui.chips import DEMO_CHIPS
+    from replay.manager import ReplayManager
+    for chip_id, _, prompt in DEMO_CHIPS:
+        assert ReplayManager.get_replay_by_prompt(prompt)["chip_id"] == chip_id
 
 def test_start_demo_single_click_shows_chips():
     """One click on Start Demo must show the chip row immediately (CODE_REVIEW H5)."""
