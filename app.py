@@ -41,6 +41,8 @@ def reset_demo():
     st.session_state.messages = []
     st.session_state.trace = []
     st.session_state.demo_started = False
+    # Re-check server connectivity so a server that was down at cold start can turn green
+    get_cached_mcp_manager.clear()
     st.rerun()
 
 # Helper: Replay fallback after an LLM failure (button callback)
@@ -52,7 +54,8 @@ def append_recorded_answer(replay_data):
     })
 
 # Cache Tool Discovery for Sidebar
-@st.cache_resource(show_spinner="Connecting to MCP Servers...")
+# ttl: a server that was down at startup is retried after 5 minutes rather than staying red all demo
+@st.cache_resource(show_spinner="Connecting to MCP Servers...", ttl=300)
 def get_cached_mcp_manager():
     manager = MCPClientManager()
     discovery = asyncio.run(manager.discover_all_tools())

@@ -71,3 +71,20 @@ def test_trace_log_counts_calls_not_events():
     ).run()
     assert at.expander[0].label == "🔍 Tool Call Trace (1 step)"
     assert not any("running" in m.value for m in at.markdown)
+
+def test_reset_demo_rechecks_server_connectivity(monkeypatch):
+    """Reset clears the cached discovery so servers are re-checked (CODE_REVIEW M8)."""
+    import streamlit as st
+    from streamlit.testing.v1 import AppTest
+    from agent.mcp_clients import MCPClientManager
+    calls = []
+    async def fake_discovery(self):
+        calls.append(1)
+        return {"servers": {}, "all_tools": []}
+    monkeypatch.setattr(MCPClientManager, "discover_all_tools", fake_discovery)
+    st.cache_resource.clear()
+    at = AppTest.from_file("app.py", default_timeout=60).run()
+    assert len(calls) == 1
+    at.button[[b.label for b in at.button].index("🔄 Reset Demo")].click().run()
+    assert len(calls) == 2
+    st.cache_resource.clear()
