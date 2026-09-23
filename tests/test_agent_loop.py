@@ -88,3 +88,12 @@ async def test_agent_loop_with_mocked_openai():
     assert len(trace_events) == 2
     assert trace_events[0]["event"] == "tool_started"
     assert trace_events[1]["event"] == "tool_finished"
+
+@pytest.mark.asyncio
+async def test_real_mcp_content_converts_to_text():
+    """Real MCP results (TextContent objects) must serialise to the tool's JSON text (CODE_REVIEW H2)."""
+    from agent.loop import content_to_text
+    from agent.mcp_clients import MCPClientManager
+    result = await MCPClientManager().call_tool("ontap", "ontap_cluster_health_summary", {})
+    text = content_to_text(result["content"])
+    assert json.loads(text)["synthetic"] is True

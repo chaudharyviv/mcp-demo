@@ -31,6 +31,18 @@ def mcp_tools_to_openai_tools(mcp_tools: List[Dict[str, Any]]) -> List[Dict[str,
         })
     return openai_tools
 
+def content_to_text(content: Any) -> str:
+    """Flattens MCP tool result content (list of TextContent etc.) into a string."""
+    if isinstance(content, list):
+        parts = []
+        for item in content:
+            text = item.get("text") if isinstance(item, dict) else getattr(item, "text", None)
+            parts.append(text if text is not None else str(item))
+        return "\n".join(parts)
+    if isinstance(content, dict):
+        return json.dumps(content)
+    return str(content)
+
 class AgentLoop:
     def __init__(self, api_key: Optional[str] = None, mcp_manager: Optional[MCPClientManager] = None):
         if not api_key:
@@ -127,8 +139,7 @@ class AgentLoop:
                     tool_result = await self.mcp_manager.call_tool(server_name, func_name, func_args)
                     duration = time.time() - tool_start
 
-                    content_output = tool_result.get("content", "")
-                    content_str = json.dumps(content_output) if isinstance(content_output, (dict, list)) else str(content_output)
+                    content_str = content_to_text(tool_result.get("content", ""))
 
                     if trace_callback:
                         trace_callback({
