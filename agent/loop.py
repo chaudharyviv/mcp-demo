@@ -187,14 +187,30 @@ class AgentLoop:
                         "content": json.dumps({"error": str(e)})
                     })
 
+        if not final_text:
+            # Iteration cap hit while the model still wanted tools: answer with what's known (spec LLM-3)
+            try:
+                response = await self._call_openai_with_retry(conversation, openai_tools, tool_choice="none")
+            except Exception as e:
+                if trace_callback:
+                    trace_callback({"event": "llm_error", "error": str(e)})
+                raise
+            final_text = response.choices[0].message.content or ""
+            conversation.append({"role": "assistant", "content": final_text})
+
         return {
             "role": "assistant",
-            "content": final_text or conversation[-1].get("content", ""),
+            "content": final_text,
             "iterations": iterations,
             "messages": conversation
         }
 
-    async def _call_openai_with_retry(self, conversation: List[Dict[str, Any]], tools: Optional[List[Dict[str, Any]]]):
+    async def _call_openai_with_retry(
+        self,
+        conversation: List[Dict[str, Any]],
+        tools: Optional[List[Dict[str, Any]]],
+        tool_choice: Optional[str] = None
+    ):
         """Calls OpenAI with 30s timeout and single retry on 5xx or 429."""
         params = {
             "model": self.model,
@@ -203,6 +219,8 @@ class AgentLoop:
         }
         if tools:
             params["tools"] = tools
+            if tool_choice:
+                params["tool_choice"] = tool_choice
 
         for attempt in range(2):
             try:

@@ -199,3 +199,23 @@ async def test_unknown_tool_not_routed_to_ontap():
     await agent.run_turn([{"role": "user", "content": "q"}], trace_callback=events.append)
     manager.call_tool.assert_not_awaited()
     assert events[-1]["event"] == "tool_failed" and "Unknown tool" in events[-1]["error"]
+
+@pytest.mark.asyncio
+async def test_iteration_cap_ends_with_a_real_answer():
+    """After 6 tool iterations the model is asked to answer without tools, not raw JSON (spec LLM-3, CODE_REVIEW M13)."""
+    agent, manager = _agent_with_one_tool_call("ontap_cluster_health_summary", [ONTAP_HEALTH_TOOL])
+    tool_call = MagicMock()
+    tool_call.id = "call_n"
+    tool_call.function.name = "ontap_cluster_health_summary"
+    tool_call.function.arguments = "{}"
+    wants_tools = MagicMock(tool_calls=[tool_call])
+    wants_tools.model_dump.return_value = {"role": "assistant", "tool_calls": []}
+    final = MagicMock(tool_calls=None, content="Summary of what I found.")
+    agent.client.chat.completions.create = AsyncMock(
+        side_effect=[MagicMock(choices=[MagicMock(message=wants_tools)])] * 6
+        + [MagicMock(choices=[MagicMock(message=final)])]
+    )
+    result = await agent.run_turn([{"role": "user", "content": "q"}])
+    assert result["content"] == "Summary of what I found."
+    assert manager.call_tool.await_count == 6
+    assert agent.client.chat.completions.create.await_args.kwargs["tool_choice"] == "none"
