@@ -10,7 +10,7 @@ from replay.manager import ReplayManager
 from ui.landing import render_landing_panel
 from ui.sidebar import render_sidebar
 from ui.closing_card import render_closing_card
-from ui.trace import render_trace_log
+from ui.trace import LiveTraceWriter, render_trace_log
 
 st.set_page_config(
     page_title="MCP Live Demo",
@@ -119,8 +119,6 @@ else:
 
         with st.chat_message("assistant"):
             current_trace = []
-            def trace_cb(evt):
-                current_trace.append(evt)
 
             # Check Replay Mode
             replay_data = None
@@ -139,34 +137,42 @@ else:
                     "trace": current_trace
                 })
             else:
-                with st.spinner("Executing agent turn via MCP..."):
-                    try:
-                        agent = AgentLoop(mcp_manager=mcp_manager)
-                        agent_messages = [
-                            {"role": m["role"], "content": m["content"]}
-                            for m in st.session_state.messages
-                            if m.get("role") in ("user", "assistant")
-                        ]
-                        result = asyncio.run(agent.run_turn(agent_messages, trace_callback=trace_cb))
-                        answer_content = result.get("content", "")
+                # Steps stream into the status box as each tool call starts and finishes (spec UI-5)
+                status = st.status("Working via MCP…", expanded=True)
+                live_writer = LiveTraceWriter(status)
+                def trace_cb(evt):
+                    current_trace.append(evt)
+                    live_writer(evt)
 
-                        st.markdown(answer_content)
-                        render_trace_log(current_trace, presenter_mode=settings["presenter_mode"])
+                try:
+                    agent = AgentLoop(mcp_manager=mcp_manager)
+                    agent_messages = [
+                        {"role": m["role"], "content": m["content"]}
+                        for m in st.session_state.messages
+                        if m.get("role") in ("user", "assistant")
+                    ]
+                    result = asyncio.run(agent.run_turn(agent_messages, trace_callback=trace_cb))
+                    answer_content = result.get("content", "")
+                    status.update(label="Done", state="complete", expanded=False)
 
-                        st.session_state.messages.append({
-                            "role": "assistant",
-                            "content": answer_content,
-                            "trace": current_trace
-                        })
-                    except Exception as e:
-                        st.error("The AI service didn't respond in time. You can show the recorded answer instead.")
-                        st.caption(f"Details: {e}")
-                        # Offer Replay Fallback Button. on_click runs on the next rerun even though
-                        # this except branch won't execute again, so the answer lands in chat history.
-                        fallback_replay = ReplayManager.get_replay_by_prompt(active_prompt)
-                        if fallback_replay:
-                            st.button(
-                                "▶️ Show Recorded Answer (Replay Fallback)",
-                                on_click=append_recorded_answer,
-                                args=(fallback_replay,)
-                            )
+                    st.markdown(answer_content)
+                    render_trace_log(current_trace, presenter_mode=settings["presenter_mode"])
+
+                    st.session_state.messages.append({
+                        "role": "assistant",
+                        "content": answer_content,
+                        "trace": current_trace
+                    })
+                except Exception as e:
+                    status.update(label="Failed", state="error", expanded=False)
+                    st.error("The AI service didn't respond in time. You can show the recorded answer instead.")
+                    st.caption(f"Details: {e}")
+                    # Offer Replay Fallback Button. on_click runs on the next rerun even though
+                    # this except branch won't execute again, so the answer lands in chat history.
+                    fallback_replay = ReplayManager.get_replay_by_prompt(active_prompt)
+                    if fallback_replay:
+                        st.button(
+                            "▶️ Show Recorded Answer (Replay Fallback)",
+                            on_click=append_recorded_answer,
+                            args=(fallback_replay,)
+                        )

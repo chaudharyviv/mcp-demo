@@ -45,3 +45,29 @@ def test_ontap_answer_shows_synthetic_caption():
     ).run()
     captions = [c.value for c in at.caption if "synthetic demo data" in c.value]
     assert len(captions) == 1
+
+def test_live_trace_writer_replaces_running_line():
+    """Streaming trace shows 'running' then replaces it with the ✓ line (spec UI-5, CODE_REVIEW M6)."""
+    from streamlit.testing.v1 import AppTest
+    at = AppTest.from_string(
+        "import streamlit as st\n"
+        "from ui.trace import LiveTraceWriter\n"
+        "w = LiveTraceWriter(st.container())\n"
+        "w({'event': 'tool_started', 'server': 'ontap', 'tool': 'ontap_aggr_show', 'args': {}})\n"
+        "w({'event': 'tool_finished', 'server': 'ontap', 'tool': 'ontap_aggr_show', 'duration': 0.3})\n"
+    ).run()
+    lines = [m.value for m in at.markdown]
+    assert lines == ["✓ `Mock ONTAP` → `ontap_aggr_show` · 0.3 s"]
+
+def test_trace_log_counts_calls_not_events():
+    """Started+finished pair renders as one step, not two (CODE_REVIEW M6)."""
+    from streamlit.testing.v1 import AppTest
+    at = AppTest.from_string(
+        "from ui.trace import render_trace_log\n"
+        "render_trace_log([\n"
+        "  {'event': 'tool_started', 'server': 'learn', 'tool': 'learn_x', 'args': {'q': 1}},\n"
+        "  {'event': 'tool_finished', 'server': 'learn', 'tool': 'learn_x', 'duration': 0.2},\n"
+        "])\n"
+    ).run()
+    assert at.expander[0].label == "🔍 Tool Call Trace (1 step)"
+    assert not any("running" in m.value for m in at.markdown)
