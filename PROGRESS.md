@@ -7,9 +7,9 @@
 
 - **Active tool:** _Antigravity_
 - **Current milestone:** _M5 — Replay mode, reset, error handling, prompt tuning_
-- **Last good commit / tag:** _3ff9806 / m4-done_
+- **Last good commit / tag:** _f1dca3a / m4-done_
 - **Tests:** _17 passed in 9.61s_
-- **Current state → Next step:** _Implement replay recordings in replay/ and mock replay mode handler in app.py._
+- **Current state → Next step:** _Create replay recordings in replay/, ReplayManager loader, and integrate replay mode and error fallback in app.py._
 
 ## 2. Milestone status
 
@@ -19,7 +19,7 @@
 | M2 | MCP client layer (Learn, GitHub, ONTAP) | ✅ Done | m2-done | Antigravity | 12/12 tests pass |
 | M3 | Agent loop on GPT-4o mini | ✅ Done | m3-done | Antigravity | 15/15 tests pass |
 | M4 | Streamlit UI (landing, sidebar, chips, trace, closing card) | ✅ Done | m4-done | Antigravity | 17/17 tests pass |
-| M5 | Replay mode, reset, error handling, prompt tuning | ⬜ Not started | | | |
+| M5 | Replay mode, reset, error handling, prompt tuning | 🟨 In progress | | | |
 | M6 | Deploy to Streamlit Cloud + backup deployment | ⬜ Not started | | | |
 | M7 | Rehearsals (5+ timed runs) | ⬜ Not started | | | Human task |
 
