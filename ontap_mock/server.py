@@ -279,6 +279,8 @@ def ontap_vol_resize(
             "volume": volume,
             "current_size_bytes": curr_vol_size,
             "new_size_bytes": new_vol_size,
+            "current_size_tib": round(curr_vol_size / 1099511627776, 1),
+            "new_size_tib": round(new_vol_size / 1099511627776, 1),
             "grow_by_gb": grow_by_gb,
             "aggregate": aggr_name,
             "current_aggregate_used_percent": round(curr_aggr_used_pct, 1),

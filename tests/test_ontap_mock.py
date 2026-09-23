@@ -129,3 +129,9 @@ def test_health_summary_exact_expected_issues():
         ("warning", "vol_reports"),
         ("warning", "vol_payments_db"),
     }
+
+def test_vol_resize_plan_reports_tib():
+    """Plan carries TiB sizes so the model never converts bytes itself (6.0 -> ~6.2 TiB per spec §3)."""
+    plan = ontap_vol_resize(volume="vol_payments_db", grow_by_gb=200, change_id="CHG0012345")["plan"]
+    assert plan["current_size_tib"] == 6.0
+    assert plan["new_size_tib"] == 6.2
