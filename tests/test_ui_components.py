@@ -86,3 +86,12 @@ def test_reset_demo_rechecks_server_connectivity(monkeypatch):
     at.button[[b.label for b in at.button].index("🔄 Reset Demo")].click().run()
     assert len(calls) == 2
     st.cache_resource.clear()
+
+def test_closing_card_matches_plan_talking_points():
+    """Closing card shows exactly the plan.md §5 talking points (CODE_REVIEW L8)."""
+    from pathlib import Path
+    from ui.closing_card import TAKEAWAYS
+    plan = (Path(__file__).parent.parent / "docs" / "plan.md").read_text(encoding="utf-8")
+    section = plan.split("### Closing card talking points", 1)[1].split("\n## ", 1)[0]
+    plan_points = [line[2:].strip() for line in section.splitlines() if line.startswith("- ")]
+    assert TAKEAWAYS == plan_points

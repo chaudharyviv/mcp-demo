@@ -1,15 +1,16 @@
 """
 Closing takeaways card rendered for the 'Wrap up' chip.
+Talking points are verbatim from docs/plan.md §5 ("Closing card talking points").
 """
 import streamlit as st
 
-def render_closing_card():
-    st.markdown("""
-    ### 🎯 Demo Takeaways & Key Highlights
+TAKEAWAYS = [
+    "The ONTAP tools mirror the public ONTAP REST API structure, so connecting a real cluster is an implementation step, not a redesign.",
+    "Read-only by default; any change is gated by a change number and shown as a plan first.",
+    "Every tool call is visible and logged.",
+    "The agent layer is model-agnostic; the same MCP server works in any MCP client.",
+    "No production system or data was needed to build or demo this.",
+]
 
-    - **Standardized Connectivity**: One universal protocol (MCP) connecting public APIs, dev tools, and enterprise storage.
-    - **API Parallelism**: ONTAP MCP tools mirror NetApp's public REST API structure; swapping to a live cluster requires zero agent prompt redesign.
-    - **In-Tool Governance**: Safety guardrails (such as mandatory Change Request numbers and dry-run execution enforcement) live **inside the tool**, not just in system prompts.
-    - **Total Observability**: Full trace transparency over tool selection, arguments, status, and sub-second execution duration.
-    - **100% Synthetic Data**: Enterprise storage operations demonstrated safely without touching production environments.
-    """)
+def render_closing_card():
+    st.markdown("### 🎯 Takeaways\n\n" + "\n".join(f"- {point}" for point in TAKEAWAYS))
