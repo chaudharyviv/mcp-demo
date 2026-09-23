@@ -7,16 +7,15 @@
 
 - **Active tool:** _Antigravity_
 - **Current milestone:** _M1 — Mock ONTAP server_
-- **Last good commit / tag:** _none yet_
+- **Last good commit / tag:** _7b6cbcf_
 - **Tests:** _not yet run_
-- **Next step (one concrete action):**
-  > _Create repo skeleton per docs/design.md §7, then generate `ontap_mock/data/estate.json` from docs/spec.md §3 and write the data consistency test._
+- **Current state → Next step:** _Create repo skeleton per docs/design.md §7, requirements.txt, `ontap_mock/data/estate.json`, `ontap_mock/server.py`, and test suite._
 
 ## 2. Milestone status
 
 | ID | Milestone | Status | Tag | Built with | Notes |
 |---|---|---|---|---|---|
-| M1 | Mock ONTAP dataset + FastMCP server (4 tools, 1 resource) + tests | ⬜ Not started | | | |
+| M1 | Mock ONTAP dataset + FastMCP server (4 tools, 1 resource) + tests | 🟨 In progress | | | |
 | M2 | MCP client layer (Learn, GitHub, ONTAP) | ⬜ Not started | | | |
 | M3 | Agent loop on GPT-4o mini | ⬜ Not started | | | |
 | M4 | Streamlit UI (landing, sidebar, chips, trace, closing card) | ⬜ Not started | | | |
