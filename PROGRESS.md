@@ -7,8 +7,8 @@
 
 - **Active tool:** _Antigravity_
 - **Current milestone:** _M2 — MCP client layer_
-- **Last good commit / tag:** _68ff3a7 / m1-done_
-- **Tests:** _9 passed in 2.21s_
+- **Last good commit / tag:** _64a3da9 / m1-done_
+- **Tests:** _9 passed in 2.00s_
 - **Current state → Next step:** _Build agent/mcp_clients.py multi-server MCP client connecting Learn, GitHub, and Mock ONTAP servers._
 
 ## 2. Milestone status
@@ -16,7 +16,7 @@
 | ID | Milestone | Status | Tag | Built with | Notes |
 |---|---|---|---|---|---|
 | M1 | Mock ONTAP dataset + FastMCP server (4 tools, 1 resource) + tests | ✅ Done | m1-done | Antigravity | 9/9 tests pass |
-| M2 | MCP client layer (Learn, GitHub, ONTAP) | ⬜ Not started | | | |
+| M2 | MCP client layer (Learn, GitHub, ONTAP) | 🟨 In progress | | | |
 | M3 | Agent loop on GPT-4o mini | ⬜ Not started | | | |
 | M4 | Streamlit UI (landing, sidebar, chips, trace, closing card) | ⬜ Not started | | | |
 | M5 | Replay mode, reset, error handling, prompt tuning | ⬜ Not started | | | |
