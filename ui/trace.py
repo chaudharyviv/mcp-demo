@@ -14,6 +14,10 @@ def render_trace_log(trace_events: List[Dict[str, Any]], presenter_mode: bool = 
     if not trace_events:
         return
 
+    # Label ONTAP-backed answers deterministically rather than relying on the model to say it
+    if any(evt.get("server") == "ontap" for evt in trace_events):
+        st.caption("🧪 Storage data above is synthetic demo data — no real systems.")
+
     with st.expander(f"🔍 Tool Call Trace ({len(trace_events)} step{'s' if len(trace_events)>1 else ''})", expanded=True):
         for evt in trace_events:
             event_type = evt.get("event")

@@ -34,3 +34,14 @@ def test_start_demo_single_click_shows_chips():
     at.button[[b.label for b in at.button].index("🚀 Start Demo")].click().run()
     labels = [b.label for b in at.button]
     assert "3a · Health" in labels and "🚀 Start Demo" not in labels
+
+def test_ontap_answer_shows_synthetic_caption():
+    """Answers that used ONTAP tools are labelled synthetic in the UI (CODE_REVIEW N2)."""
+    from streamlit.testing.v1 import AppTest
+    at = AppTest.from_string(
+        "from ui.trace import render_trace_log\n"
+        "render_trace_log([{'event': 'tool_finished', 'server': 'ontap', 'tool': 'ontap_aggr_show', 'duration': 0.1}])\n"
+        "render_trace_log([{'event': 'tool_finished', 'server': 'learn', 'tool': 'learn_x', 'duration': 0.1}])\n"
+    ).run()
+    captions = [c.value for c in at.caption if "synthetic demo data" in c.value]
+    assert len(captions) == 1
