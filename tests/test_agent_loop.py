@@ -136,3 +136,22 @@ def test_system_prompt_names_demo_repo(monkeypatch):
     prompt = load_system_prompt()
     assert "`example-org/example-repo`" in prompt
     assert "{GITHUB_DEMO_REPO}" not in prompt
+
+def _openai_status_error(status: int):
+    import httpx
+    import openai
+    response = httpx.Response(status, request=httpx.Request("POST", "https://api.openai.com/v1/chat/completions"))
+    return openai.APIStatusError(f"HTTP {status}", response=response, body=None)
+
+@pytest.mark.asyncio
+@pytest.mark.parametrize("status, expected_calls", [(503, 2), (429, 2), (401, 1), (400, 1)])
+async def test_openai_retry_only_on_5xx_and_429(status, expected_calls):
+    """One retry on 5xx/429; no retry on client errors (spec LLM-4, CODE_REVIEW M1)."""
+    agent = AgentLoop(api_key="mock-key", mcp_manager=MagicMock())
+    assert agent.client.max_retries == 0 and agent.client.timeout == 30.0
+    agent.client = MagicMock()
+    agent.client.chat.completions.create = AsyncMock(side_effect=_openai_status_error(status))
+    with patch("agent.loop.asyncio.sleep", new=AsyncMock()):
+        with pytest.raises(Exception):
+            await agent._call_openai_with_retry([], None)
+    assert agent.client.chat.completions.create.await_count == expected_calls

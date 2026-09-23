@@ -8,7 +8,7 @@ import os
 import time
 from pathlib import Path
 from typing import Dict, List, Any, Optional, Callable
-from openai import AsyncOpenAI
+from openai import AsyncOpenAI, APIStatusError, APITimeoutError
 from agent.mcp_clients import MCPClientManager
 
 SYSTEM_PROMPT_PATH = Path(__file__).parent / "system_prompt.md"
@@ -63,7 +63,8 @@ class AgentLoop:
                 except Exception:
                     api_key = None
         self.api_key = api_key
-        self.client = AsyncOpenAI(api_key=self.api_key) if self.api_key else None
+        # 30 s per request; SDK retries off so the single retry below is the only one (spec LLM-4)
+        self.client = AsyncOpenAI(api_key=self.api_key, timeout=30.0, max_retries=0) if self.api_key else None
         self.mcp_manager = mcp_manager or MCPClientManager()
         self.model = "gpt-4o-mini"
         self.temperature = 0.2
@@ -203,13 +204,12 @@ class AgentLoop:
 
         for attempt in range(2):
             try:
-                return await asyncio.wait_for(
-                    self.client.chat.completions.create(**params),
-                    timeout=30.0
-                )
-            except Exception as e:
-                # Retry once if 1st attempt fails
-                if attempt == 0:
+                return await self.client.chat.completions.create(**params)
+            except (APIStatusError, APITimeoutError) as e:
+                # Retry once, only on timeout, 429 or 5xx; anything else (e.g. 401, 400) fails fast
+                status = getattr(e, "status_code", None)
+                retryable = isinstance(e, APITimeoutError) or status == 429 or (status or 0) >= 500
+                if attempt == 0 and retryable:
                     await asyncio.sleep(1.0)
                     continue
-                raise e
+                raise
