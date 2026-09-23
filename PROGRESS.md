@@ -7,9 +7,9 @@
 
 - **Active tool:** _Antigravity_
 - **Current milestone:** _M6 — Deploy to Streamlit Cloud + backup deployment_
-- **Last good commit / tag:** _9afe52c / m5-done_
+- **Last good commit / tag:** _0cce8ef / m5-done_
 - **Tests:** _20 passed in 8.79s_
-- **Current state → Next step:** _Deploy app to Streamlit Cloud, configure Streamlit secrets (OPENAI_API_KEY, GITHUB_PAT, GITHUB_DEMO_REPO), and verify deployed URLs._
+- **Current state → Next step:** _Create secrets.toml.example, update st.secrets fallbacks in agent/, and build deployment readiness tests._
 
 ## 2. Milestone status
 
@@ -20,7 +20,7 @@
 | M3 | Agent loop on GPT-4o mini | ✅ Done | m3-done | Antigravity | 15/15 tests pass |
 | M4 | Streamlit UI (landing, sidebar, chips, trace, closing card) | ✅ Done | m4-done | Antigravity | 17/17 tests pass |
 | M5 | Replay mode, reset, error handling, prompt tuning | ✅ Done | m5-done | Antigravity | 20/20 tests pass |
-| M6 | Deploy to Streamlit Cloud + backup deployment | ⬜ Not started | | | |
+| M6 | Deploy to Streamlit Cloud + backup deployment | 🟨 In progress | | | |
 | M7 | Rehearsals (5+ timed runs) | ⬜ Not started | | | Human task |
 
 Status key: ⬜ Not started · 🟨 In progress · ✅ Done (tests pass, tagged) · 🟥 Blocked
