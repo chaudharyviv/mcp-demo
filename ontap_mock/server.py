@@ -221,7 +221,8 @@ def ontap_vol_resize(
             "message": "A change number is required (format CHG followed by 7 digits)."
         }
 
-    if not re.match(r"^CHG\d{7}$", change_id):
+    # fullmatch + ASCII digits: rejects trailing newlines and non-ASCII digits that ^...$ / \d allow
+    if not re.fullmatch(r"CHG[0-9]{7}", change_id):
         return {
             "synthetic": True,
             "status": "refused",

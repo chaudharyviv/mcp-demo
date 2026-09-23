@@ -135,3 +135,11 @@ def test_vol_resize_plan_reports_tib():
     plan = ontap_vol_resize(volume="vol_payments_db", grow_by_gb=200, change_id="CHG0012345")["plan"]
     assert plan["current_size_tib"] == 6.0
     assert plan["new_size_tib"] == 6.2
+
+@pytest.mark.parametrize("change_id", ["CHG0012345\n", " CHG0012345", "CHG0012345 ", "chg0012345", "CHG001234", "CHG00123456", "CHG００12345"])
+def test_vol_resize_rejects_near_miss_change_ids(change_id):
+    """Only exactly CHG + 7 ASCII digits passes the guardrail (CODE_REVIEW M9)."""
+    data_before = load_data()
+    result = ontap_vol_resize(volume="vol_payments_db", grow_by_gb=200, change_id=change_id)
+    assert result["status"] == "refused" and result["synthetic"] is True
+    assert load_data() == data_before
