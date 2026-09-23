@@ -83,3 +83,13 @@ def test_replay_mode_is_paced_like_live(monkeypatch):
     assert [s.label for s in at.status] == ["Done"]
     assert at.session_state.messages[-1]["content"] == ReplayManager.get_replay_by_chip_id("3a")["content"]
     assert elapsed >= 0.8, f"replay not paced ({elapsed:.2f}s)"
+
+def test_tool_calls_logged_in_session_trace():
+    """Each answer's tool calls are appended to st.session_state.trace (spec NF-5, CODE_REVIEW L7)."""
+    from streamlit.testing.v1 import AppTest
+    at = AppTest.from_file("app.py", default_timeout=90).run()
+    at.button[[b.label for b in at.button].index("🚀 Start Demo")].click().run()
+    at.checkbox[[c.label for c in at.checkbox].index("Enable Replay Mode")].check().run()
+    at.button[[b.label for b in at.button].index("3c · Approve")].click().run()
+    logged = at.session_state.trace
+    assert [e["tool"] for e in logged if e["event"] == "tool_finished"] == ["ontap_vol_resize"]

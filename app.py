@@ -48,13 +48,14 @@ def reset_demo():
     get_cached_mcp_manager.clear()
     st.rerun()
 
+# Helper: record an assistant answer and its tool calls (NF-5 tool-call log lives in session state)
+def add_assistant_message(content, trace):
+    st.session_state.messages.append({"role": "assistant", "content": content, "trace": trace})
+    st.session_state.trace.extend(trace)
+
 # Helper: Replay fallback after an LLM failure (button callback)
 def append_recorded_answer(replay_data):
-    st.session_state.messages.append({
-        "role": "assistant",
-        "content": replay_data["content"],
-        "trace": replay_data["trace"]
-    })
+    add_assistant_message(replay_data["content"], replay_data["trace"])
 
 # Cache Tool Discovery for Sidebar
 # ttl: a server that was down at startup is retried after 5 minutes rather than staying red all demo
@@ -134,11 +135,7 @@ else:
                 st.markdown(answer_content)
                 render_trace_log(current_trace, presenter_mode=settings["presenter_mode"])
 
-                st.session_state.messages.append({
-                    "role": "assistant",
-                    "content": answer_content,
-                    "trace": current_trace
-                })
+                add_assistant_message(answer_content, current_trace)
             else:
                 # Steps stream into the status box as each tool call starts and finishes (spec UI-5)
                 status = st.status("Working via MCP…", expanded=True)
@@ -161,11 +158,7 @@ else:
                     st.markdown(answer_content)
                     render_trace_log(current_trace, presenter_mode=settings["presenter_mode"])
 
-                    st.session_state.messages.append({
-                        "role": "assistant",
-                        "content": answer_content,
-                        "trace": current_trace
-                    })
+                    add_assistant_message(answer_content, current_trace)
                 except Exception as e:
                     status.update(label="Failed", state="error", expanded=False)
                     st.error("The AI service didn't respond in time. You can show the recorded answer instead.")
