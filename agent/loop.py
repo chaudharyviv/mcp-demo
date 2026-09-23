@@ -15,7 +15,16 @@ SYSTEM_PROMPT_PATH = Path(__file__).parent / "system_prompt.md"
 
 def load_system_prompt() -> str:
     with open(SYSTEM_PROMPT_PATH, "r", encoding="utf-8") as f:
-        return f.read()
+        prompt = f.read()
+    # Fill in the demo repo so "our demo repo" (chip 2) resolves to a concrete repository
+    repo = os.environ.get("GITHUB_DEMO_REPO")
+    if not repo:
+        try:
+            import streamlit as st
+            repo = st.secrets.get("GITHUB_DEMO_REPO")
+        except Exception:
+            repo = None
+    return prompt.replace("{GITHUB_DEMO_REPO}", repo or "(not configured)")
 
 def mcp_tools_to_openai_tools(mcp_tools: List[Dict[str, Any]]) -> List[Dict[str, Any]]:
     """Converts MCP tool schemas to OpenAI format."""

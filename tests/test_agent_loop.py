@@ -129,3 +129,10 @@ async def test_namespaced_remote_tool_called_by_original_name():
 
     await agent.run_turn([{"role": "user", "content": "q"}])
     mock_mcp_manager.call_tool.assert_awaited_once_with("learn", "microsoft_docs_search", {"query": "storage"})
+
+def test_system_prompt_names_demo_repo(monkeypatch):
+    """GITHUB_DEMO_REPO is injected so chip 2 knows which repo to query (CODE_REVIEW H9)."""
+    monkeypatch.setenv("GITHUB_DEMO_REPO", "example-org/example-repo")
+    prompt = load_system_prompt()
+    assert "`example-org/example-repo`" in prompt
+    assert "{GITHUB_DEMO_REPO}" not in prompt
