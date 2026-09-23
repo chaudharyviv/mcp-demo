@@ -33,7 +33,15 @@ def mcp_tools_to_openai_tools(mcp_tools: List[Dict[str, Any]]) -> List[Dict[str,
 
 class AgentLoop:
     def __init__(self, api_key: Optional[str] = None, mcp_manager: Optional[MCPClientManager] = None):
-        self.api_key = api_key or os.environ.get("OPENAI_API_KEY")
+        if not api_key:
+            api_key = os.environ.get("OPENAI_API_KEY")
+            if not api_key:
+                try:
+                    import streamlit as st
+                    api_key = st.secrets.get("OPENAI_API_KEY")
+                except Exception:
+                    api_key = None
+        self.api_key = api_key
         self.client = AsyncOpenAI(api_key=self.api_key) if self.api_key else None
         self.mcp_manager = mcp_manager or MCPClientManager()
         self.model = "gpt-4o-mini"

@@ -17,7 +17,15 @@ class MCPClientManager:
     """Manages MCP connections and tool execution across servers."""
 
     def __init__(self, github_pat: Optional[str] = None, ontap_server_script: Optional[str] = None):
-        self.github_pat = github_pat or os.environ.get("GITHUB_PAT")
+        if not github_pat:
+            github_pat = os.environ.get("GITHUB_PAT")
+            if not github_pat:
+                try:
+                    import streamlit as st
+                    github_pat = st.secrets.get("GITHUB_PAT")
+                except Exception:
+                    github_pat = None
+        self.github_pat = github_pat
         self.ontap_server_script = ontap_server_script or os.path.join(
             os.path.dirname(os.path.dirname(os.path.abspath(__file__))),
             "ontap_mock",
