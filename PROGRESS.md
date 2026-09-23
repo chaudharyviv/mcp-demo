@@ -5,11 +5,11 @@
 
 ## 1. Current state (keep this section short and current)
 
-- **Active tool:** _Antigravity_
+- **Active tool:** _Kiro_
 - **Current milestone:** _M7 — Rehearsals (5+ timed runs)_
 - **Last good commit / tag:** _217041e / m6-done_
-- **Tests:** _24 passed in 8.99s_
-- **Current state → Next step:** _Perform 5+ timed rehearsals on Streamlit Cloud app URL and verify all demo prompts in spec.md §5._
+- **Tests:** _24 passed in 9.27s (verified M6-done code)_
+- **Current state → Next step:** _Perform 5+ timed rehearsals on Streamlit Cloud deployment (main + backup URLs). Use M7 Rehearsal Script template. Verify all 6 chips pass acceptance criteria. Document timing, issues, and deployment URLs in PROGRESS.md. Target: all chips pass ≥95% of runs with demo time 9–10 minutes._
 
 ## 2. Milestone status
 
@@ -21,7 +21,7 @@
 | M4 | Streamlit UI (landing, sidebar, chips, trace, closing card) | ✅ Done | m4-done | Antigravity | 17/17 tests pass |
 | M5 | Replay mode, reset, error handling, prompt tuning | ✅ Done | m5-done | Antigravity | 20/20 tests pass |
 | M6 | Deploy to Streamlit Cloud + backup deployment | ✅ Done | m6-done | Antigravity | 24/24 tests pass |
-| M7 | Rehearsals (5+ timed runs) | ⬜ Not started | | | Human task |
+| M7 | Rehearsals (5+ timed runs) | 🟨 In progress | | Kiro | Comprehensive M7 rehearsal script and verification template created. Awaiting live runs on Streamlit Cloud. |
 
 Status key: ⬜ Not started · 🟨 In progress · ✅ Done (tests pass, tagged) · 🟥 Blocked
 
@@ -64,6 +64,15 @@ Decisions that refine (not change) the docs. Anything that changes `docs/` needs
 |---|---|---|---|---|
 
 ## 7. Session log (newest first)
+
+### 2026-09-23 — Kiro — M7 (Handoff & Setup)
+- Done: Created steering files from AGENTS.md §3–5 (`.kiro/steering/product.md`, `tech.md`, `structure.md`). Generated Kiro spec for M7 with 9-task workflow. Created comprehensive M7 Rehearsal Script template with per-chip acceptance criteria, timing capture, and aggregate results log. Verified all 24 M6 tests still passing. Verified secrets handling (OPENAI_API_KEY, GITHUB_PAT) properly configured via environment or st.secrets, never committed.
+- Tests: 24 passed
+- Files touched: `PROGRESS.md`, `.kiro/steering/product.md`, `.kiro/steering/tech.md`, `.kiro/steering/structure.md` (created via steering creation workflow)
+- Deliverables: M7 Rehearsal Handoff Checklist (artifact), M7 Rehearsal Script and Log Template (artifact), Kiro spec with 9 tasks
+- Issues found: None
+- Next step (one concrete action): Performer to conduct 5+ timed rehearsals on Streamlit Cloud deployment(s) using M7 Rehearsal Script template; document timing, pass/fail per chip, and any blockers in PROGRESS.md; tag m7-done when all acceptance criteria met.
+- Credits left (approx.): N/A
 
 ### 2026-09-23 — Antigravity — M6
 - Done: Created `.streamlit/secrets.toml.example` template, added `st.secrets` fallback in `agent/mcp_clients.py` and `agent/loop.py`, built test suite in `tests/test_deployment_readiness.py`.
@@ -112,6 +121,31 @@ Decisions that refine (not change) the docs. Anything that changes `docs/` needs
 
 ## 8. Handoff notes for the next tool
 
-_Write anything the next tool must know that isn't obvious from the code: half-finished work, traps you hit, things you tried that didn't work._
+**M7 is a human-led rehearsal phase, not code-based.**
 
-- 
+- All code (M1–M6) is complete, tested, and committed (`m6-done` tag).
+- M7 requires performer to conduct 5+ timed runs on live Streamlit Cloud deployment (main + backup URLs).
+- **Deliverables created this session:**
+  - Three steering files: `.kiro/steering/product.md`, `tech.md`, `structure.md` (extracted from AGENTS.md §3–5)
+  - M7 Rehearsal Handoff Checklist (verification guide with pre-demo checklist, failure modes, recovery, post-rehearsal actions)
+  - M7 Rehearsal Script and Log Template (detailed per-chip script with acceptance criteria checklist for each of 6 chips; aggregate timing/pass-rate tables; troubleshooting guide)
+  - Kiro spec: 9 tasks covering infrastructure check, secrets verification, and 5+ rehearsal runs
+- **What performer must do:**
+  1. Verify Streamlit Cloud main + backup URLs are deployed and accessible
+  2. Confirm OPENAI_API_KEY, GITHUB_PAT, and spend cap are set in Streamlit Cloud App Settings
+  3. Perform 5+ full demo runs using the M7 Rehearsal Script template (includes per-chip timing capture and acceptance criteria)
+  4. Document all results in PROGRESS.md (timing summary, pass/fail matrix, known issues, deployment URLs)
+  5. Commit with message `M7: Complete 5+ timed rehearsals; deployment verified` and tag `m7-done`
+- **Success criteria for M7:**
+  - All 6 chips pass ≥95% of 5+ runs
+  - Overall demo time 9–10 minutes (target per-chip ≤8s, max ≤15s)
+  - Replay mode confirmed working (≥2 chips tested)
+  - No critical blockers
+  - Both deployments stable and responsive
+- **If issues found during rehearsals:**
+  - Use replay fallback (pre-recorded responses in `replay/`)
+  - Refer to troubleshooting table in M7 Rehearsal Script template
+  - Document blocker in PROGRESS.md §6
+  - Do NOT mark M7 done until all acceptance criteria pass
+
+
