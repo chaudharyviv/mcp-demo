@@ -64,3 +64,17 @@ async def test_hung_server_tool_call_times_out():
     """A hung tool call raises TimeoutError instead of blocking the turn (CODE_REVIEW M2)."""
     with pytest.raises(TimeoutError):
         await _hanging_manager().call_tool("ontap", "ontap_cluster_health_summary", {})
+
+@pytest.mark.asyncio
+async def test_discovery_runs_servers_concurrently():
+    """Two hung servers cost one timeout, not two (CODE_REVIEW M3)."""
+    import sys
+    import time
+    manager = _hanging_manager()
+    manager.servers_config["learn"] = {"type": "stdio", "command": sys.executable, "args": ["-c", "import time; time.sleep(60)"]}
+    manager.servers_config["github"] = {"type": "stdio", "command": sys.executable, "args": ["-c", "import time; time.sleep(60)"]}
+    start = time.monotonic()
+    discovery = await manager.discover_all_tools()
+    elapsed = time.monotonic() - start
+    assert all(s["status"] == "offline" for s in discovery["servers"].values())
+    assert elapsed < 2 * manager.timeout + 1, f"discovery looks serial ({elapsed:.1f}s)"

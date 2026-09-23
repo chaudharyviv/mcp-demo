@@ -102,12 +102,13 @@ class MCPClientManager:
             return {"status": "offline", "tools": [], "error": str(e)}
 
     async def discover_all_tools(self) -> Dict[str, Any]:
-        """Discovers tools across all configured MCP servers resiliently."""
-        results = {}
+        """Discovers tools across all configured MCP servers concurrently and resiliently."""
+        names = list(self.servers_config.keys())
+        # get_server_tools never raises, so one slow or failed server can't block the others
+        responses = await asyncio.gather(*(self.get_server_tools(name) for name in names))
+        results = dict(zip(names, responses))
         all_tools = []
-        for server_name in self.servers_config.keys():
-            res = await self.get_server_tools(server_name)
-            results[server_name] = res
+        for res in responses:
             if res["status"] == "online":
                 all_tools.extend(res["tools"])
         return {
