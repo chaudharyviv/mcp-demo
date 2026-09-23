@@ -1,0 +1,24 @@
+{
+  "chip_id": "1",
+  "chip_title": "1 · Docs",
+  "prompt": "How do I restrict public network access to an Azure Storage account? Give me the key steps and the official doc link.",
+  "content": "To restrict public network access to an Azure Storage account:\n1. Open the **Azure Portal** and navigate to your Storage Account.\n2. Select **Networking** under the Settings menu.\n3. Change 'Public network access' to **Disabled** or **Enabled from selected virtual networks and IP addresses**.\n4. Save configuration settings to apply restricted firewall access.\n\nOfficial Documentation: [Azure Storage Firewalls and Virtual Networks](https://learn.microsoft.com/en-us/azure/storage/common/storage-network-security)",
+  "trace": [
+    {
+      "event": "tool_started",
+      "server": "learn",
+      "tool": "learn_microsoft_docs_search",
+      "args": {
+        "query": "restrict public network access Azure storage account"
+      }
+    },
+    {
+      "event": "tool_finished",
+      "server": "learn",
+      "tool": "learn_microsoft_docs_search",
+      "duration": 0.42,
+      "status": "success",
+      "result": "{\"url\": \"https://learn.microsoft.com/en-us/azure/storage/common/storage-network-security\", \"title\": \"Configure Azure Storage firewalls and virtual networks\"}"
+    }
+  ]
+}

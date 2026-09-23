@@ -1,0 +1,22 @@
+{
+  "chip_id": "3a",
+  "chip_title": "3a · Health",
+  "prompt": "How healthy is our storage estate? Anything I should worry about?",
+  "content": "Storage Estate Health Summary (Synthetic Demo Data):\n- **Critical Aggregate**: `aggr_a01` is at **91.0%** capacity (exceeds 90% threshold).\n- **Critical Volume**: `vol_legacy_ftp` state is **offline**.\n- **Warning Volume**: `vol_reports` snapshot overrun (**18.0%** used vs 5% reserve).\n- **Warning Volume**: `vol_payments_db` space nearly full (**94.0%** used).\n\nImmediate attention is required for `aggr_a01` capacity and the offline `vol_legacy_ftp` volume.",
+  "trace": [
+    {
+      "event": "tool_started",
+      "server": "ontap",
+      "tool": "ontap_cluster_health_summary",
+      "args": {}
+    },
+    {
+      "event": "tool_finished",
+      "server": "ontap",
+      "tool": "ontap_cluster_health_summary",
+      "duration": 0.28,
+      "status": "success",
+      "result": "{\"synthetic\": true, \"counts\": {\"clusters\": 2, \"aggregates\": 4, \"volumes\": 14}, \"issues\": [{\"severity\": \"critical\", \"object_name\": \"aggr_a01\"}]}"
+    }
+  ]
+}
