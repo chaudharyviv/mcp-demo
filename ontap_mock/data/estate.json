@@ -1,0 +1,341 @@
+{
+  "synthetic": true,
+  "clusters": [
+    {
+      "name": "cls-alpha",
+      "nodes": ["alpha-01", "alpha-02"],
+      "svms": ["svm_core", "svm_shared"]
+    },
+    {
+      "name": "cls-beta",
+      "nodes": ["beta-01", "beta-02"],
+      "svms": ["svm_ops", "svm_legacy"]
+    }
+  ],
+  "aggregates": [
+    {
+      "name": "aggr_a01",
+      "uuid": "aggr-uuid-a01",
+      "cluster": "cls-alpha",
+      "node": { "name": "alpha-01" },
+      "state": "online",
+      "space": {
+        "block_storage": {
+          "size": 21990232555520,
+          "used": 20011111625523,
+          "available": 1979120929997
+        }
+      }
+    },
+    {
+      "name": "aggr_a02",
+      "uuid": "aggr-uuid-a02",
+      "cluster": "cls-alpha",
+      "node": { "name": "alpha-02" },
+      "state": "online",
+      "space": {
+        "block_storage": {
+          "size": 21990232555520,
+          "used": 12094627905536,
+          "available": 9895604649984
+        }
+      }
+    },
+    {
+      "name": "aggr_b01",
+      "uuid": "aggr-uuid-b01",
+      "cluster": "cls-beta",
+      "node": { "name": "beta-01" },
+      "state": "online",
+      "space": {
+        "block_storage": {
+          "size": 32985348833280,
+          "used": 18141941858304,
+          "available": 14843406974976
+        }
+      }
+    },
+    {
+      "name": "aggr_b02",
+      "uuid": "aggr-uuid-b02",
+      "cluster": "cls-beta",
+      "node": { "name": "beta-02" },
+      "state": "online",
+      "space": {
+        "block_storage": {
+          "size": 16492674416640,
+          "used": 9895604649984,
+          "available": 6597069766656
+        }
+      }
+    }
+  ],
+  "volumes": [
+    {
+      "name": "vol_payments_db",
+      "uuid": "vol-uuid-01",
+      "cluster": "cls-alpha",
+      "svm": { "name": "svm_core" },
+      "aggregates": [{ "name": "aggr_a01" }],
+      "state": "online",
+      "style": "flexvol",
+      "size": 6597069766656,
+      "space": {
+        "used": 6201245580656,
+        "available": 395824186000,
+        "snapshot": {
+          "reserve_percent": 5,
+          "used": 175921860444
+        }
+      },
+      "footprint": 6377167441100
+    },
+    {
+      "name": "vol_ledger_archive",
+      "uuid": "vol-uuid-02",
+      "cluster": "cls-alpha",
+      "svm": { "name": "svm_core" },
+      "aggregates": [{ "name": "aggr_a01" }],
+      "state": "online",
+      "style": "flexvol",
+      "size": 6597069766656,
+      "space": {
+        "used": 5167704650752,
+        "available": 1429365115904,
+        "snapshot": {
+          "reserve_percent": 5,
+          "used": 219902325555
+        }
+      },
+      "footprint": 5387606976307
+    },
+    {
+      "name": "vol_core_logs",
+      "uuid": "vol-uuid-03",
+      "cluster": "cls-alpha",
+      "svm": { "name": "svm_core" },
+      "aggregates": [{ "name": "aggr_a01" }],
+      "state": "online",
+      "style": "flexvol",
+      "size": 4398046511104,
+      "space": {
+        "used": 3628388371660,
+        "available": 769658139444,
+        "snapshot": {
+          "reserve_percent": 5,
+          "used": 219902325555
+        }
+      },
+      "footprint": 3848290697215
+    },
+    {
+      "name": "vol_batch_stage",
+      "uuid": "vol-uuid-04",
+      "cluster": "cls-alpha",
+      "svm": { "name": "svm_shared" },
+      "aggregates": [{ "name": "aggr_a01" }],
+      "state": "online",
+      "style": "flexvol",
+      "size": 5497558138880,
+      "space": {
+        "used": 4178144185550,
+        "available": 1319413953330,
+        "snapshot": {
+          "reserve_percent": 5,
+          "used": 219902325555
+        }
+      },
+      "footprint": 4398046510901
+    },
+    {
+      "name": "vol_hr_share",
+      "uuid": "vol-uuid-05",
+      "cluster": "cls-alpha",
+      "svm": { "name": "svm_shared" },
+      "aggregates": [{ "name": "aggr_a02" }],
+      "state": "online",
+      "style": "flexvol",
+      "size": 4398046511104,
+      "space": {
+        "used": 3078632557772,
+        "available": 1319413953332,
+        "snapshot": {
+          "reserve_percent": 5,
+          "used": 219902325555
+        }
+      },
+      "footprint": 3298534883328
+    },
+    {
+      "name": "vol_app_bin",
+      "uuid": "vol-uuid-06",
+      "cluster": "cls-alpha",
+      "svm": { "name": "svm_shared" },
+      "aggregates": [{ "name": "aggr_a02" }],
+      "state": "online",
+      "style": "flexvol",
+      "size": 3298534883328,
+      "space": {
+        "used": 2528876743884,
+        "available": 769658139444,
+        "snapshot": {
+          "reserve_percent": 5,
+          "used": 219902325555
+        }
+      },
+      "footprint": 2748779069440
+    },
+    {
+      "name": "vol_reports",
+      "uuid": "vol-uuid-07",
+      "cluster": "cls-alpha",
+      "svm": { "name": "svm_shared" },
+      "aggregates": [{ "name": "aggr_a02" }],
+      "state": "online",
+      "style": "flexvol",
+      "size": 4398046511104,
+      "space": {
+        "used": 2858730232217,
+        "available": 1539316278887,
+        "snapshot": {
+          "reserve_percent": 5,
+          "used": 791648372000
+        }
+      },
+      "footprint": 3848290697216
+    },
+    {
+      "name": "vol_test_clone",
+      "uuid": "vol-uuid-08",
+      "cluster": "cls-alpha",
+      "svm": { "name": "svm_core" },
+      "aggregates": [{ "name": "aggr_a02" }],
+      "state": "online",
+      "style": "flexvol",
+      "size": 3298534883328,
+      "space": {
+        "used": 1979120929996,
+        "available": 1319413953332,
+        "snapshot": {
+          "reserve_percent": 5,
+          "used": 219902325555
+        }
+      },
+      "footprint": 2199023255552
+    },
+    {
+      "name": "vol_mq_data",
+      "uuid": "vol-uuid-09",
+      "cluster": "cls-beta",
+      "svm": { "name": "svm_ops" },
+      "aggregates": [{ "name": "aggr_b01" }],
+      "state": "online",
+      "style": "flexvol",
+      "size": 8796093022208,
+      "space": {
+        "used": 6157265115545,
+        "available": 2638827906663,
+        "snapshot": {
+          "reserve_percent": 5,
+          "used": 439804651110
+        }
+      },
+      "footprint": 6597069766656
+    },
+    {
+      "name": "vol_risk_models",
+      "uuid": "vol-uuid-10",
+      "cluster": "cls-beta",
+      "svm": { "name": "svm_ops" },
+      "aggregates": [{ "name": "aggr_b01" }],
+      "state": "online",
+      "style": "flexvol",
+      "size": 7696581394432,
+      "space": {
+        "used": 5717460464435,
+        "available": 1979120929997,
+        "snapshot": {
+          "reserve_percent": 5,
+          "used": 329853488332
+        }
+      },
+      "footprint": 6047313977764
+    },
+    {
+      "name": "vol_dr_replica",
+      "uuid": "vol-uuid-11",
+      "cluster": "cls-beta",
+      "svm": { "name": "svm_ops" },
+      "aggregates": [{ "name": "aggr_b01" }],
+      "state": "online",
+      "style": "flexvol",
+      "size": 6597069766656,
+      "space": {
+        "used": 5167704650752,
+        "available": 1429365115904,
+        "snapshot": {
+          "reserve_percent": 5,
+          "used": 329853488332
+        }
+      },
+      "footprint": 5497558113884
+    },
+    {
+      "name": "vol_legacy_ftp",
+      "uuid": "vol-uuid-12",
+      "cluster": "cls-beta",
+      "svm": { "name": "svm_legacy" },
+      "aggregates": [{ "name": "aggr_b02" }],
+      "state": "offline",
+      "style": "flexvol",
+      "size": 3298534883328,
+      "space": {
+        "used": 2089072092774,
+        "available": 1209462790554,
+        "snapshot": {
+          "reserve_percent": 5,
+          "used": 109951162777
+        }
+      },
+      "footprint": 2199023255552
+    },
+    {
+      "name": "vol_user_home",
+      "uuid": "vol-uuid-13",
+      "cluster": "cls-beta",
+      "svm": { "name": "svm_legacy" },
+      "aggregates": [{ "name": "aggr_b02" }],
+      "state": "online",
+      "style": "flexvol",
+      "size": 5497558138880,
+      "space": {
+        "used": 4178144185550,
+        "available": 1319413953330,
+        "snapshot": {
+          "reserve_percent": 5,
+          "used": 219902325555
+        }
+      },
+      "footprint": 4398046510901
+    },
+    {
+      "name": "vol_ci_cache",
+      "uuid": "vol-uuid-14",
+      "cluster": "cls-beta",
+      "svm": { "name": "svm_ops" },
+      "aggregates": [{ "name": "aggr_b02" }],
+      "state": "online",
+      "style": "flexvol",
+      "size": 4398046511104,
+      "space": {
+        "used": 3078632557772,
+        "available": 1319413953332,
+        "snapshot": {
+          "reserve_percent": 5,
+          "used": 219902325555
+        }
+      },
+      "footprint": 3298534883531
+    }
+  ]
+}
