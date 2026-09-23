@@ -159,3 +159,24 @@ def test_vol_resize_unknown_volume_suggests_close_matches(query, expected):
 def test_vol_resize_unknown_volume_no_match_gives_next_step():
     result = ontap_vol_resize(volume="zzz", grow_by_gb=200, change_id="CHG0012345")
     assert result["close_matches"] == [] and "ontap_vol_show" in result["message"]
+
+@pytest.mark.parametrize("call", [
+    lambda: ontap_cluster_health_summary(),
+    lambda: ontap_cluster_health_summary(cluster="cls-beta"),
+    lambda: ontap_aggr_show(min_used_percent=50),
+    lambda: ontap_vol_show(aggregate="aggr_a01"),
+    lambda: ontap_vol_resize(volume="vol_payments_db", grow_by_gb=200),
+    lambda: ontap_vol_resize(volume="vol_payments_db", grow_by_gb=200, change_id="BAD"),
+    lambda: ontap_vol_resize(volume="no_such_vol", grow_by_gb=200, change_id="CHG0012345"),
+    lambda: ontap_vol_resize(volume="vol_payments_db", grow_by_gb=5000, change_id="CHG0012345"),
+    lambda: get_inventory_summary(),
+], ids=["health", "health_cluster", "aggr_show", "vol_show", "resize_refused_missing",
+        "resize_refused_malformed", "resize_unknown_volume", "resize_dry_run_max", "resource"])
+def test_dataset_file_unchanged_after_every_tool(call):
+    """The dataset file is byte-identical after any tool call, including refused/error paths (AGENTS §3.3, CODE_REVIEW M16)."""
+    from ontap_mock.server import DATA_PATH
+    before = DATA_PATH.read_bytes()
+    result = call()
+    assert DATA_PATH.read_bytes() == before
+    if isinstance(result, dict) and "executed" in result:
+        assert result["executed"] is False
