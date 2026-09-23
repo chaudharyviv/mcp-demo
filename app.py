@@ -2,7 +2,6 @@
 Main Streamlit Entry Point for MCP Live Demo.
 """
 import asyncio
-import os
 import time
 import streamlit as st
 from agent.mcp_clients import MCPClientManager

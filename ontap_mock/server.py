@@ -156,7 +156,6 @@ def ontap_aggr_show(
             continue
         size = aggr["space"]["block_storage"]["size"]
         used = aggr["space"]["block_storage"]["used"]
-        available = aggr["space"]["block_storage"]["available"]
         used_pct = (used / size) * 100 if size > 0 else 0
 
         if min_used_percent is not None and used_pct < min_used_percent:

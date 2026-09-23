@@ -1,4 +1,3 @@
-import pytest
 from replay.manager import ReplayManager
 
 def test_replay_files_exist_and_valid():

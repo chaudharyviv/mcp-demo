@@ -1,6 +1,5 @@
 import sys
 from pathlib import Path
-import pytest
 from agent.mcp_clients import MCPClientManager
 
 def test_streamlit_config_exists():

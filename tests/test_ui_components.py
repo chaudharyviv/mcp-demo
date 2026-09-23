@@ -1,4 +1,3 @@
-import pytest
 from ui.landing import render_landing_panel
 from ui.sidebar import render_sidebar
 from ui.closing_card import render_closing_card

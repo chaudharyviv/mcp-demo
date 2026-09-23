@@ -77,7 +77,6 @@ class AgentLoop:
 
         while iterations < self.max_iterations:
             iterations += 1
-            start_time = time.time()
 
             try:
                 # Call OpenAI with 30s timeout and automatic retry logic on 5xx/429
