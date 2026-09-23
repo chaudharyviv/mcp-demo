@@ -93,11 +93,8 @@ class AgentLoop:
                         "event": "llm_error",
                         "error": str(e)
                     })
-                return {
-                    "role": "assistant",
-                    "content": f"Error calling language model: {str(e)}",
-                    "iterations": iterations
-                }
+                # Propagate so the UI can show a friendly error and offer the replay fallback
+                raise
 
             choice = response.choices[0]
             message = choice.message

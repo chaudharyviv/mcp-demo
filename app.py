@@ -38,6 +38,14 @@ def reset_demo():
     st.session_state.demo_started = False
     st.rerun()
 
+# Helper: Replay fallback after an LLM failure (button callback)
+def append_recorded_answer(replay_data):
+    st.session_state.messages.append({
+        "role": "assistant",
+        "content": replay_data["content"],
+        "trace": replay_data["trace"]
+    })
+
 # Cache Tool Discovery for Sidebar
 @st.cache_resource(show_spinner="Connecting to MCP Servers...")
 def get_cached_mcp_manager():
@@ -151,14 +159,14 @@ else:
                             "trace": current_trace
                         })
                     except Exception as e:
-                        st.error(f"Error executing agent turn: {str(e)}")
-                        # Offer Replay Fallback Button
+                        st.error("The AI service didn't respond in time. You can show the recorded answer instead.")
+                        st.caption(f"Details: {e}")
+                        # Offer Replay Fallback Button. on_click runs on the next rerun even though
+                        # this except branch won't execute again, so the answer lands in chat history.
                         fallback_replay = ReplayManager.get_replay_by_prompt(active_prompt)
-                        if fallback_replay and st.button("▶️ Show Recorded Answer (Replay Fallback)"):
-                            st.markdown(fallback_replay["content"])
-                            render_trace_log(fallback_replay["trace"], presenter_mode=settings["presenter_mode"])
-                            st.session_state.messages.append({
-                                "role": "assistant",
-                                "content": fallback_replay["content"],
-                                "trace": fallback_replay["trace"]
-                            })
+                        if fallback_replay:
+                            st.button(
+                                "▶️ Show Recorded Answer (Replay Fallback)",
+                                on_click=append_recorded_answer,
+                                args=(fallback_replay,)
+                            )

@@ -48,3 +48,25 @@ def test_all_chips_acceptance_criteria():
     r3c = ReplayManager.get_replay_by_chip_id("3c")
     assert "executed: false" in r3c["content"].lower() or "no storage changes" in r3c["content"].lower()
     assert "aggr_a02" in r3c["content"]
+
+def test_llm_failure_offers_working_replay_fallback(monkeypatch):
+    """OpenAI failure -> friendly error + fallback button that shows the recorded answer (CODE_REVIEW H6)."""
+    from streamlit.testing.v1 import AppTest
+    from agent.loop import AgentLoop
+
+    async def fail(self, conversation, tools):
+        raise RuntimeError("simulated 503")
+    monkeypatch.setenv("OPENAI_API_KEY", "sk-test-dummy")
+    monkeypatch.setattr(AgentLoop, "_call_openai_with_retry", fail)
+
+    at = AppTest.from_file("app.py", default_timeout=90).run()
+    at.button[[b.label for b in at.button].index("🚀 Start Demo")].click().run()
+    at.button[[b.label for b in at.button].index("3a · Health")].click().run()
+    assert at.error, "friendly error not shown"
+    assert not any("Error calling language model" in m.value for m in at.markdown)
+
+    labels = [b.label for b in at.button]
+    at.button[labels.index("▶️ Show Recorded Answer (Replay Fallback)")].click().run()
+    recorded = ReplayManager.get_replay_by_chip_id("3a")["content"]
+    assert at.session_state.messages[-1]["content"] == recorded
+    assert any(recorded[:40] in m.value for m in at.markdown)
