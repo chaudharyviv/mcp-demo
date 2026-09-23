@@ -3,6 +3,7 @@ Main Streamlit Entry Point for MCP Live Demo.
 """
 import asyncio
 import os
+import time
 import streamlit as st
 from agent.mcp_clients import MCPClientManager
 from agent.loop import AgentLoop
@@ -18,6 +19,10 @@ st.set_page_config(
     layout="wide",
     initial_sidebar_state="expanded"
 )
+
+# Replay pacing (spec UI-9): short "thinking" pause, then each step for its recorded duration, capped
+REPLAY_THINK_SECONDS = 0.8
+REPLAY_MAX_STEP_SECONDS = 1.5
 
 # Initialize Session State
 if "messages" not in st.session_state:
@@ -128,6 +133,15 @@ else:
             if replay_data:
                 answer_content = replay_data["content"]
                 current_trace = replay_data["trace"]
+                status = st.status("Working via MCP…", expanded=True)
+                live_writer = LiveTraceWriter(status)
+                time.sleep(REPLAY_THINK_SECONDS)
+                for evt in current_trace:
+                    if evt.get("event") in ("tool_finished", "tool_failed"):
+                        # Hold the "running" line for the recorded call duration
+                        time.sleep(min(evt.get("duration", 0.5), REPLAY_MAX_STEP_SECONDS))
+                    live_writer(evt)
+                status.update(label="Done", state="complete", expanded=False)
                 st.markdown(answer_content)
                 render_trace_log(current_trace, presenter_mode=settings["presenter_mode"])
 

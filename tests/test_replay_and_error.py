@@ -70,3 +70,17 @@ def test_llm_failure_offers_working_replay_fallback(monkeypatch):
     recorded = ReplayManager.get_replay_by_chip_id("3a")["content"]
     assert at.session_state.messages[-1]["content"] == recorded
     assert any(recorded[:40] in m.value for m in at.markdown)
+
+def test_replay_mode_is_paced_like_live(monkeypatch):
+    """Replay shows the status box and waits for recorded step durations (spec UI-9, CODE_REVIEW M7)."""
+    import time
+    from streamlit.testing.v1 import AppTest
+    at = AppTest.from_file("app.py", default_timeout=90).run()
+    at.button[[b.label for b in at.button].index("🚀 Start Demo")].click().run()
+    at.checkbox[[c.label for c in at.checkbox].index("Enable Replay Mode")].check().run()
+    start = time.monotonic()
+    at.button[[b.label for b in at.button].index("3a · Health")].click().run()
+    elapsed = time.monotonic() - start
+    assert [s.label for s in at.status] == ["Done"]
+    assert at.session_state.messages[-1]["content"] == ReplayManager.get_replay_by_chip_id("3a")["content"]
+    assert elapsed >= 0.8, f"replay not paced ({elapsed:.2f}s)"
