@@ -32,7 +32,8 @@ def test_replay_fixtures_content():
     assert "learn.microsoft.com" in r1["content"]
 
     r2 = ReplayManager.get_replay_by_chip_id("2")
-    assert "urgent" in r2["content"].lower()
+    assert "github.com" in r2["content"] and "commit" in r2["content"].lower()
+    assert [e["tool"] for e in r2["trace"] if e["event"] == "tool_finished"]  # recorded from a real run
 
     r3a = ReplayManager.get_replay_by_chip_id("3a")
     assert "aggr_a01" in r3a["content"]

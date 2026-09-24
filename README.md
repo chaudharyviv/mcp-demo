@@ -9,7 +9,7 @@ A Streamlit app for a 10-minute live demo: one AI assistant (OpenAI GPT-4o mini)
 | Server | What it is | Transport | Access |
 |---|---|---|---|
 | **Microsoft Learn** | Public documentation search | Streamable HTTP | No auth |
-| **GitHub** | Issues and PRs in one demo repo | Streamable HTTP | **Read-only** endpoint + read-only token |
+| **GitHub** | Commits, issues and PRs in one demo repo | Streamable HTTP | **Read-only** endpoint + read-only token |
 | **Mock ONTAP** | Our own FastMCP server over a synthetic storage estate | stdio subprocess | Local |
 
 The key moment: when asked to grow a volume, the assistant **won't produce a plan without a change number**. With one (`CHG` + 7 digits), the resize tool returns a **dry-run plan only** (`executed: false`). The change-number check is enforced inside the tool itself, not just in the prompt, and no code path can modify the data.
@@ -37,7 +37,7 @@ cp .streamlit/secrets.toml.example .streamlit/secrets.toml
 |---|---|---|
 | `OPENAI_API_KEY` | Every chip except Wrap up | Set a spend cap on the account |
 | `GITHUB_PAT` | Chip 2 | Fine-grained, **read-only**, scoped to the demo repo |
-| `GITHUB_DEMO_REPO` | Chip 2 | `owner/repo`; the repo should have a few open MCP-related issues |
+| `GITHUB_DEMO_REPO` | Chip 2 | `owner/repo`; any repo with a few commits works (open issues/PRs are optional) |
 
 All values must be quoted strings (`KEY = "value"`), or Streamlit can't read the file. Environment variables with the same names take precedence over `secrets.toml`.
 
@@ -56,7 +56,7 @@ Click **Start Demo**, then use the chips in order:
 | Chip | What happens |
 |---|---|
 | `1 · Docs` | Microsoft Learn answer with an official doc link |
-| `2 · GitHub` | Summary of the demo repo's open issues and the most urgent one |
+| `2 · GitHub` | The demo repo's 3 latest commits plus its open issue/PR count, from several GitHub tools called in parallel |
 | `3a · Health` | Storage health: `aggr_a01` at 91%, `vol_legacy_ftp` offline, `vol_reports` snapshot overrun |
 | `3b · Resize` | "Grow the payments database volume by 200 GB" → asks for a change number, no plan |
 | `3c · Approve` | With `CHG0012345` → dry-run plan: ~92% projected, suggests `aggr_a02`, **nothing executed** |

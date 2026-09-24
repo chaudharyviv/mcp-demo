@@ -45,7 +45,7 @@ Status key: ⬜ Not started · 🟨 In progress · ✅ Done (tests pass, tagged)
 | Chip | Local | Deployed | Replay recorded | Notes |
 |---|---|---|---|---|
 | `1 · Docs` — Microsoft Learn answer with link | ✅ | ⬜ | ✅ | Re-verified live 2026-09-24 after CODE_REVIEW fixes; re-recorded from a real run |
-| `2 · GitHub` — MCP-related issues from demo repo | 🟨 | ⬜ | ⬜ | 2026-09-24: live call works (read-only endpoint, 16.4 s), but the repo has 0 open issues, so it fails "names a real issue". Seed issues, then re-record. Replay still invented |
+| `2 · GitHub` — latest 3 commits + open issue/PR count (several tools in parallel) | ✅ | ⬜ | ✅ | 2026-09-24: chip changed by owner (repo has commits but no issues). Verified live in the app, 10.4–11.8 s; replay recorded from a real run |
 | `3a · Health` — aggr_a01 91%, vol_legacy_ftp offline, vol_reports snapshot overrun | ✅ | ⬜ | ✅ | Re-verified live 2026-09-24; health returns exactly the 4 spec issues |
 | `3b · Resize` — no plan produced; asks for a change number (spec §5) | ✅ | ⬜ | ✅ | Re-verified live 2026-09-24; no tool call. If the model does call the tool, it refuses (tested) |
 | `3c · Approve` — dry run, ~92% projected, aggr_a02 suggested, "Nothing was executed." | ✅ | ⬜ | ✅ | Re-verified live 2026-09-24 after prompt fix (N1); 6.0 → 6.2 TiB, 92.0% |
@@ -60,6 +60,8 @@ Decisions that refine (not change) the docs. Anything that changes `docs/` needs
 | 2026-09-23 | Adjusted vol_ci_cache footprint to 3298534883531 | Ensures volume footprints sum exactly to aggr_b02 used space (9895604649984) | M1 |
 | 2026-09-24 | Keep `cluster` on every aggregate and volume, and root-level `synthetic`, in `estate.json` (not listed in spec §3.2/§3.3) | Needed for the `cluster` filters in spec §2.4; `synthetic` marks the dataset itself. Approved by owner (CODE_REVIEW M12) | Review fixes |
 | 2026-09-24 | Resize plan also returns `current_size_tib` / `new_size_tib` | GPT-4o mini mis-converted bytes live (showed 6.3 TiB instead of 6.2); tool-computed values keep chip 3c correct (CODE_REVIEW N1) | Review fixes |
+| 2026-09-24 | Chip 2 prompt changed to "What's been happening in our demo repo? Summarise the last 3 commits and tell me if there are any open issues or pull requests."; spec §5 and plan §5 updated | Owner request: the demo repo has commits but no issues, so the old prompt answered "0 open issues". New prompt shows several GitHub tools in one turn | Owner request |
+| 2026-09-24 | Latency: tool calls the model requests together run in parallel; the model uses the tool list cached at startup (design §2.3) instead of re-discovering every turn; one MCP session per server per turn, reused by all its calls (AGENTS §4) | Chip 2 took 21–33 s (NF-1 limit 15 s): per-turn discovery 5–7 s, sequential calls, a new session per call. Now 10.4–11.8 s; other chips 1.8–7.4 s | Owner request |
 | 2026-09-24 | Sidebar lists each server's discovered tools (collapsed expander per server, name + first line of description) | Owner request; refines spec UI-3 / design §4.1, which show only a tool count. Collapsed by default so the audience view is unchanged | Owner request |
 | 2026-09-24 | GitHub MCP uses the read-only endpoint `https://api.githubcopilot.com/mcp/readonly` for the model and all calls; the full catalog (`/mcp/`) is fetched once for the sidebar, which shows "27 of 45 enabled (read-only)" and lists the 18 blocked write tools | Owner request. The full endpoint offered 19 write tools (merge, delete, push…) to the model; read-only mode removes them server-side, so the guardrail doesn't rely on our filter or the PAT alone. **docs/spec.md §2.3 MCP-2 still lists `/mcp/`; owner to approve updating it** | Owner request |
 
@@ -67,13 +69,21 @@ Decisions that refine (not change) the docs. Anything that changes `docs/` needs
 
 | ID | Issue | Severity | Found in | Status |
 |---|---|---|---|---|
-| K1 | Chip 2 (GitHub): pipeline now verified live (read-only endpoint, correct repo, `github_list_issues` called), but the demo repo has **0 open issues**, so the answer can't name one (spec §5). `replay/2_github.json` still contains invented issues | High | CODE_REVIEW H10 | Open: owner to seed a few MCP-related open issues in the demo repo (plan.md §3/§7), then re-run + re-record chip 2 |
+| K1 | Chip 2 had nothing to show (demo repo has 0 open issues) and its replay was invented | High | CODE_REVIEW H10 | **Resolved 2026-09-24**: chip 2 now asks for latest commits + open issues/PRs; verified live; replay re-recorded |
 | K2 | ONTAP tools don't publish readOnly/idempotent annotations (spec §2.4); fastmcp 0.4.1 can't set them | Medium | CODE_REVIEW N3 | Open: owner to choose fastmcp upgrade vs. small override |
 | K3 | Chip 3a answer length varies run to run (one run was ~12 lines before prompt tightening) | Low | Review fixes | Watch during M7 rehearsals |
 | K4 | MCP Inspector check of the ONTAP server not recorded (AGENTS §6 M1) | Low | CODE_REVIEW L12 | Open |
 | K5 | Repo has no git remote, so nothing has been pushed | Medium | Review | Open: add remote and push |
 
 ## 7. Session log (newest first)
+
+### 2026-09-24 — Claude Code — Chip 2 redesign and latency fixes
+- Done: chip 2 now asks for the last 3 commits plus open issues/PRs, so it calls `github_list_commits`, `github_list_issues` and `github_list_pull_requests` in one turn. Updated `ui/chips.py`, spec §5, plan §5 and the README (owner-approved docs change).
+- Latency: parallel tool calls (`asyncio.gather`, trace tracks parallel steps by `call_id`); model uses the cached startup tool list; one MCP session per server per turn (`MCPClientManager.turn()`), opened in the turn's task so cancel scopes close correctly.
+- Live timings through the app (venv, real servers): 1 · Docs 7.4 s, 2 · GitHub 10.4–11.8 s, 3a 4.7 s, 3b 1.8 s, 3c 4.4 s. All under the NF-1 limit; chip 2 is above the 8 s target because GitHub's own responses take 3.5–7 s.
+- Replay: `replay/2_github.json` re-recorded from a real run; K1 resolved. All replays are now real recordings.
+- Tests: 89 passed.
+- Next step: push to a git remote so Streamlit Cloud gets these changes (K5), then run M7 rehearsals on the deployed URL.
 
 ### 2026-09-24 — Claude Code — UI polish, owner sign-off
 - Done: chip tooltips show the full prompt (`2b0301f`); server colours in sidebar and trace (design §4.2), systems named in the trace title, status header names the running step (`cd04da2`). Verified in a real browser.

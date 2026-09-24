@@ -60,7 +60,7 @@ Deliver a **10-minute live demo from a Streamlit Cloud UI** showing how the Mode
 |---|---|---|---|
 | 0:00–1:15 | Hook | Landing panel: story line, three system cards | "Start demo" |
 | 1:15–2:15 | Act 1: Knowledge | Microsoft Learn answer with docs link | `1 · Docs` |
-| 2:15–3:15 | Act 2: Work system | GitHub issues summary; open trace once | `2 · GitHub` |
+| 2:15–3:15 | Act 2: Work system | Repo activity: latest commits + open issues/PRs (several tools in one turn); open trace once | `2 · GitHub` |
 | 3:15–8:00 | **Act 3: Our storage (hero)** | Health check finds 3 issues → resize refused → approved with CR as dry-run | `3a · Health` → `3b · Resize` → `3c · Approve` |
 | 8:00–9:15 | Wrap up | Closing card with takeaways | `Wrap up` |
 | 9:15–10:00 | Buffer / Q&A | — | — |

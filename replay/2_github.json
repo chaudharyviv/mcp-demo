@@ -1,24 +1,68 @@
 {
   "chip_id": "2",
   "chip_title": "2 · GitHub",
-  "prompt": "Summarise the open issues in our demo repo and tell me which one looks most urgent.",
-  "content": "Here is a summary of the open issues in the demo repository:\n- **#101: High IOPS latency spike on volume_payments_db** (Urgent)\n- **#102: Routine snapshot quota cleanup schedule**\n- **#103: Update backup replication schedules**\n\nThe most urgent issue is **#101: High IOPS latency spike on volume_payments_db**, as it directly impacts storage database performance.",
+  "prompt": "What's been happening in our demo repo? Summarise the last 3 commits and tell me if there are any open issues or pull requests.",
+  "content": "The last three commits in the demo repo are:\n\n1. **[Create LICENSE](https://github.com/chaudharyviv/cloud-crucible/commit/a3e51e536e69d1a5fb4e078b12e3d5353ee795b5)** by Viv on August 16, 2026.\n2. **[Updated views.py](https://github.com/chaudharyviv/cloud-crucible/commit/4f4aa5a9f1ef173c2f28a1b22b341baa5bc1a276)** by Vivikt on August 16, 2026.\n3. **[Updated views.py](https://github.com/chaudharyviv/cloud-crucible/commit/82121c4fae2d34b682db6de176346da3460814f9)** by Vivikt on August 16, 2026.\n\nThere are currently **no open issues** or **open pull requests** in the demo repo.",
   "trace": [
     {
+      "call_id": "call_XgPjEBIdVAF9FrNuPmr8gLFj",
+      "tool": "github_list_commits",
       "event": "tool_started",
       "server": "github",
-      "tool": "github_list_issues",
       "args": {
+        "owner": "chaudharyviv",
+        "repo": "cloud-crucible",
+        "perPage": 3
+      }
+    },
+    {
+      "call_id": "call_RAaJTfNLR8X4WjOdb5PeQhWp",
+      "tool": "github_list_issues",
+      "event": "tool_started",
+      "server": "github",
+      "args": {
+        "owner": "chaudharyviv",
+        "repo": "cloud-crucible",
         "state": "open"
       }
     },
     {
+      "call_id": "call_f0srx7u2Exp6m6TSO5a7klOv",
+      "tool": "github_list_pull_requests",
+      "event": "tool_started",
+      "server": "github",
+      "args": {
+        "owner": "chaudharyviv",
+        "repo": "cloud-crucible",
+        "state": "open"
+      }
+    },
+    {
+      "call_id": "call_XgPjEBIdVAF9FrNuPmr8gLFj",
+      "tool": "github_list_commits",
       "event": "tool_finished",
       "server": "github",
-      "tool": "github_list_issues",
-      "duration": 0.35,
+      "duration": 3.56,
       "status": "success",
-      "result": "[{\"number\": 101, \"title\": \"High IOPS latency spike on volume_payments_db\", \"state\": \"open\"}]"
+      "result": "[{\"sha\":\"a3e51e536e69d1a5fb4e078b12e3d5353ee795b5\",\"html_url\":\"https://github.com/chaudharyviv/cloud-crucible/commit/a3e51e536e69d1a5fb4e078b12e3d5353ee795b5\",\"commit\":{\"message\":\"Create LICENSE\",\"aut"
+    },
+    {
+      "call_id": "call_f0srx7u2Exp6m6TSO5a7klOv",
+      "tool": "github_list_pull_requests",
+      "event": "tool_finished",
+      "server": "github",
+      "duration": 3.55,
+      "status": "success",
+      "result": "[]"
+    },
+    {
+      "call_id": "call_RAaJTfNLR8X4WjOdb5PeQhWp",
+      "tool": "github_list_issues",
+      "event": "tool_finished",
+      "server": "github",
+      "duration": 3.56,
+      "status": "success",
+      "result": "{\"issues\":[],\"totalCount\":0,\"pageInfo\":{\"hasNextPage\":false,\"hasPreviousPage\":false}}"
     }
   ]
 }

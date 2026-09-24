@@ -146,7 +146,7 @@ Fields: `name`, `uuid`, `svm.name`, `aggregates[].name`, `state`, `style`, `size
 | Chip | Prompt | Must happen |
 |---|---|---|
 | `1 · Docs` | "How do I restrict public network access to an Azure Storage account? Give me the key steps and the official doc link." | Microsoft Learn tool called; ≤6 lines; includes a learn.microsoft.com link |
-| `2 · GitHub` | "Summarise the open issues in our demo repo and tell me which one looks most urgent." | GitHub tool called; names at least one real issue from the demo repo |
+| `2 · GitHub` | "What's been happening in our demo repo? Summarise the last 3 commits and tell me if there are any open issues or pull requests." | Several GitHub tools called (commits, issues, PRs), in parallel; names the 3 latest real commits with links; states the open issue/PR count (may be zero) |
 | `3a · Health` | "How healthy is our storage estate? Anything I should worry about?" | Calls `ontap_cluster_health_summary`; mentions `aggr_a01` at **91%**, `vol_legacy_ftp` offline, `vol_reports` snapshot overrun |
 | `3b · Resize` | "Grow the payments database volume by 200 GB." | Does **not** produce a plan; asks for a change number |
 | `3c · Approve` | "Change number is CHG0012345." | Calls `ontap_vol_resize`; presents a dry-run plan with projected ~92% and the aggregate warning; states nothing was executed |
