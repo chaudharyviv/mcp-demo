@@ -72,6 +72,15 @@ Decisions that refine (not change) the docs. Anything that changes `docs/` needs
 
 ## 7. Session log (newest first)
 
+### 2026-09-24 — Claude Code — All remaining CODE_REVIEW findings
+- Done: N1, N2, H10 (chips 1/3a/3b/3c re-recorded live), and all MEDIUM (M1–M17) and LOW (L1–L12) findings, one commit per item (`ca1dd58` … `6bdfa1c`). Status table in `CODE_REVIEW.md`. New files: `agent/settings.py`, `ui/chips.py`. Removed the duplicate root `spec.md`/`plan.md`/`design.md`.
+- Tests: 77 passed (was 37). Four consecutive full runs were 77/77 at about 58 s each. One earlier background run reported 1 failure while the machine appears to have slept (reported duration 5 h 17 m). The test name wasn't captured; likely a wall-clock timing assertion. Watch for it.
+- Live check (real OpenAI + Learn + ONTAP): chips 1, 3a, 3b and 3c pass spec §5. 3c now shows 6.0 → 6.2 TiB, 92.0%, `aggr_a02`, and ends "Nothing was executed." Chip 3a was also verified end to end through the real app (AppTest).
+- Files touched: `agent/*`, `ontap_mock/server.py`, `app.py`, `ui/*`, `replay/*.json`, `tests/*`, `.streamlit/config.toml`, `.gitignore`, `CODE_REVIEW.md`, `PROGRESS.md`; deleted root `spec.md`, `plan.md`, `design.md`
+- Issues found: **N3 (MEDIUM, new):** ONTAP tools publish no readOnly/idempotent annotations (spec §2.4), and fastmcp 0.4.1 can't set them. Needs an owner decision (K2). Chip 2 is still unverified (K1). There's still no git remote, so nothing is pushed (K5).
+- Next step (one concrete action): Set `GITHUB_PAT` + `GITHUB_DEMO_REPO`, run chip 2 live and re-record `replay/2_github.json`. Then deploy and start M7 rehearsals.
+- Credits left (approx.): N/A
+
 ### 2026-09-23 — Claude Code — HIGH fixes from CODE_REVIEW.md
 - Done: Fixed H1–H9 from `CODE_REVIEW.md`, one commit each (`90def10`…`139369c`), with a regression test per fix. H10 partially fixed (`8cb0dab`): replays for chips 1, 3a, 3b re-recorded from real live runs. Status table added to `CODE_REVIEW.md`.
 - Tests: 37 passed (was 24). New tests include AppTest checks for Start Demo and the replay fallback, plus MCP-level input-bound tests. Some tests need network (Learn discovery).

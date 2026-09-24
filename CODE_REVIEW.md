@@ -8,33 +8,56 @@ The ONTAP mock server and the resize guardrail itself are sound: refusals come b
 
 Verification method: read all code against docs/, ran `pytest` (24 passed), and ran direct probes: tool edge cases, `MCPClientManager.call_tool` output types, SSE vs Streamable HTTP against `learn.microsoft.com/api/mcp`, and `pip index versions fastmcp`.
 
-## Fix status (updated 2026-09-23, after HIGH-fix pass)
+## Fix status (updated 2026-09-24, after all findings)
 
-Only HIGH findings were fixed, one commit each, with the full suite run after each fix (24 → **37 passed**). MEDIUM/LOW items are still **open** and wait on owner approval. A few were resolved as a direct side effect of a HIGH fix and are marked as such below. After the fixes, a live run (real OpenAI + Learn + ONTAP) passed chips 1, 3a and 3b end to end.
+Every finding has been worked, one commit per item (two pairs share a commit where the changes couldn't be separated: M11+L3 and N1+L9). The full suite ran after each commit: 24 → **77 passed**. Four back-to-back full runs just before this update were 77/77 at about 58 s each. One background run earlier reported 1 failure, but its own clock showed 5 h 17 m, which means the machine slept mid-run and a wall-clock timing check tripped. That output didn't keep the test name, so this is flagged rather than proven. Chips 1, 3a, 3b and 3c were re-verified **live** (real OpenAI + Learn + ONTAP), and 3a was also run end to end through the real app via AppTest. The "Do NOT change" list was respected throughout.
 
 | ID | Status | Commit | Notes |
 |---|---|---|---|
-| H1 | ✅ Fixed | `90def10` | Pinned to PROGRESS §3 versions, plus `mcp==1.12.4` and `pytest-asyncio==0.24.0`. `pip install --dry-run` resolves cleanly. |
-| H2 | ✅ Fixed | `9339766` | New `content_to_text()` in agent/loop.py. Test uses real client output (not a mock). |
-| H3 | ✅ Fixed | `dbd7fa9` | `streamablehttp_client` for Learn/GitHub. Network test confirms Learn is online with 3 tools. GitHub is untested (no PAT here). |
-| H4 | ✅ Fixed | `8b06bb1` | Loop calls `original_name`. Routing test added. Confirmed live: `microsoft_docs_search` succeeds. |
-| H5 | ✅ Fixed | `d03bca3` | `on_click` on Start Demo. The AppTest fails on the old code and passes on the new. |
-| H6 | ✅ Fixed | `b7ed724` | Loop re-raises LLM errors. App shows a friendly error, and the fallback button (`on_click`) appends the recorded answer. The AppTest fails on the old code and passes on the new. |
-| H7 | ✅ Fixed | `69c6298` | `Annotated[..., Field(...)]` on all tool params (grow 1–5000, min_used 0–100, limit ≥ 1), and the unused model classes are removed. Enforced at the MCP protocol level: direct Python calls bypass it, but the app only calls through MCP. Tests go through the real stdio client. |
-| H8 | ✅ Fixed | `8522ff7` | `snapshot.used` for `vol_app_bin` and `vol_test_clone` is now 164926744166 (5% of 3 TiB). Footprint sums are unchanged. Exact-set health test added. |
-| H9 | ✅ Fixed | `139369c` | Rule 7 in `system_prompt.md` has a `{GITHUB_DEMO_REPO}` placeholder, filled from env or `st.secrets` (falls back to "(not configured)"). |
-| H10 | 🟨 Partial | `8cb0dab` | Chips 1, 3a and 3b re-recorded from real runs. **Chip 2** is not recorded (no `GITHUB_PAT` in this environment), so it still has the invented issues. **Chip 3c** is not recorded because the live answer fails acceptance (see N1). |
-| N1 | 🆕 HIGH, open | n/a | **Found while re-recording H10.** The live chip 3c answer gives the correct plan (92.0%, `aggr_a02` warning) but **never states that nothing was executed** (spec §5 3c), and it shows sizes in raw bytes. The prompt needs tuning, e.g. rule 4: "When presenting a dry-run plan, show sizes in TiB and end with: *Nothing was executed.*" Then re-record 3c. Not fixed, since it's outside the approved list. |
-| N2 | 🆕 LOW, open | n/a | The live chip 3a answer doesn't mention that the data is synthetic (prompt rule 3). It still passes spec §5 3a. Could be handled in the same prompt pass as N1. |
-| M1–M13 | ⬜ Open | n/a | Not touched. |
-| M14 | 🟨 Partly covered | `9339766`, `8b06bb1` | Regression tests for H2 (real `TextContent`) and H4 (routing) were added. The original mock in `test_agent_loop_with_mocked_openai` is unchanged. |
-| M15 | ✅ Resolved via H8 | `8522ff7` | The exact-set health test was H8's regression test. |
-| M16 | 🟨 Partly covered | `69c6298` | `grow_by_gb` bounds and "dataset unchanged" after rejected calls are covered. Unknown volume and whitespace `change_id` are still untested. |
-| M17 | 🟨 Partly covered | `dbd7fa9` | Learn discovery test added (needs network). The unreachable-server test still relies on DNS. |
-| L1–L5, L7–L12 | ⬜ Open | n/a | Not touched. The `BaseModel` import is gone (part of H7), but the unused `List` import remains (L4). |
-| L6 | ✅ Resolved via H7 | `69c6298` | `limit` now has `ge=1`, so `limit=0` is rejected. |
+| H1 | ✅ Fixed | `90def10` | Pins match PROGRESS §3, plus `mcp==1.12.4` and `pytest-asyncio==0.24.0`. |
+| H2 | ✅ Fixed | `9339766` | `content_to_text()`. Tested with real client output. |
+| H3 | ✅ Fixed | `dbd7fa9` | Streamable HTTP. Learn verified live. GitHub is untested (no PAT here). |
+| H4 | ✅ Fixed | `8b06bb1` | Remote tools are called by `original_name`. |
+| H5 | ✅ Fixed | `d03bca3` | Start Demo works on the first click. |
+| H6 | ✅ Fixed | `b7ed724` | LLM errors surface, and the replay fallback button works. |
+| H7 | ✅ Fixed | `69c6298` | Pydantic `Field` bounds, enforced at the MCP protocol level. |
+| H8 | ✅ Fixed | `8522ff7` | Health check returns exactly the 4 spec issues. |
+| H9 | ✅ Fixed | `139369c` | `{GITHUB_DEMO_REPO}` is filled into the prompt. |
+| H10 | 🟨 Mostly fixed | `8cb0dab`, `f61622b` | Chips 1, 3a, 3b and 3c are recorded from real runs. **Chip 2 is still the invented recording.** It needs `GITHUB_PAT` + `GITHUB_DEMO_REPO` (PROGRESS K1). |
+| N1 | ✅ Fixed | `ca1dd58` | Prompt rule 4 ends dry-run answers with "**Nothing was executed.**" The resize plan now also returns `current_size_tib` / `new_size_tib`, because the model mis-converted bytes live (6.3 instead of 6.2 TiB). Recorded in PROGRESS §5. |
+| N2 | ✅ Fixed | `62e9e33` | A fixed UI caption under any answer that used ONTAP tools, instead of relying on the model to say so. |
+| N3 | 🆕 MEDIUM, open | n/a | **Missed in the original review:** the ONTAP tools publish no `readOnly`/`idempotent` annotations (spec §2.4, design §2.4). fastmcp 0.4.1's `tool()` has no annotations parameter and its `list_tools` drops them, although `mcp` 1.12.4 supports them. Options: upgrade fastmcp (needs approval per AGENTS §3.8), or a ~10-line `list_tools` override in `server.py`. Needs an owner decision (PROGRESS K2). |
+| M1 | ✅ Fixed | `2a38faf` | `AsyncOpenAI(timeout=30, max_retries=0)`. One retry, only on timeout/429/5xx. |
+| M2 | ✅ Fixed | `e1036d9` | 30 s `wait_for` on MCP discovery and calls. Hung-server tests confirm no orphaned processes. |
+| M3 | ✅ Fixed | `e5d83d6` | Discovery runs concurrently (live: 2.5 s for all three servers). Sessions stay per call/turn. |
+| M4 | ✅ Fixed | `24290b6` | `isError` is traced as ✗. |
+| M5 | ✅ Fixed | `15d188e` | Unknown tool gets an error back to the model, and no server is called. |
+| M6 | ✅ Fixed | `55edf21` | Steps stream into `st.status`, and the history trace shows one line per call. |
+| M7 | ✅ Fixed | `094931b` | Replay streams steps at their recorded durations (capped at 1.5 s). |
+| M8 | ✅ Fixed | `0163c95` | Cache `ttl=300`, and Reset demo clears it. |
+| M9 | ✅ Fixed | `399eacc` | `re.fullmatch(r"CHG[0-9]{7}")`. |
+| M10 | ✅ Fixed | `ea38413` | Fuzzy plus word-overlap close matches ("payments database" → `vol_payments_db`). |
+| M11 | ✅ Fixed | `d474780` | Invalid `[layout]` removed. 18px root font for screen share. |
+| M12 | ✅ Resolved | `5595906` | Kept the fields. Your approval is recorded in PROGRESS §5. |
+| M13 | ✅ Fixed | `c9d1b4a` | At the cap, a final `tool_choice="none"` call. |
+| M14 | ✅ Fixed | `b056019` (+ `9339766`, `8b06bb1`) | The mock returns real `TextContent`, and the test checks what the model receives. |
+| M15 | ✅ Resolved via H8 | `8522ff7` | Exact-set health test. |
+| M16 | ✅ Fixed | `14f96ba` (+ `69c6298`, `399eacc`, `ea38413`) | Dataset file is byte-identical after every tool and every refused/error path. Bounds, near-miss IDs and unknown volumes are covered. |
+| M17 | ✅ Fixed | `1798d6d` (+ `dbd7fa9`) | Unreachable test uses a closed local port. The Learn discovery test still needs network. |
+| L1 | ✅ Fixed | `aaa233d` | New `ui/chips.py`, tested verbatim against spec §5. The unused `chip_id` was removed. |
+| L2 | ✅ Fixed | `0039373` | Renamed to `test_replay_fixtures_content`. |
+| L3 | ✅ Fixed | `d474780` | Test asserts `layout="wide"` in app.py. |
+| L4 | ✅ Fixed | `0754c5e` | pyflakes clean (used as a local dev tool, not added to requirements). |
+| L5 | ✅ Fixed | `d248a65` | `_open_session()` plus a new `agent/settings.py::get_secret()`. |
+| L6 | ✅ Resolved via H7 | `69c6298` | `limit` has `ge=1`. |
+| L7 | ✅ Fixed | `9847c78` | `add_assistant_message()` also appends to `st.session_state.trace`. |
+| L8 | ✅ Fixed | `19b5727` | Plan §5 talking points verbatim, tested against docs/plan.md. |
+| L9 | ✅ Fixed | `ca1dd58` | Prompt forbids invented or reused example change numbers. |
+| L10 | ✅ Fixed | `409f7a1` | Root copies were byte-identical to `docs/` and are now deleted. |
+| L11 | ✅ Fixed | `1a8ce36` | `.env`, `.venv/`, `venv/` ignored. |
+| L12 | ✅ Fixed | `6bdfa1c` | PROGRESS §1/§4/§6 corrected. Chip 2 is marked unverified. The MCP Inspector check is still not done (PROGRESS K4). |
 
-"Do NOT change" list: all items were respected. The refusal order, `load_data()` per call, `sys.executable` launch, per-turn sessions and dataset byte values are unchanged, apart from the two `snapshot.used` values H8 called for.
+**New files** (layout additions, approved as part of "all the issues"): `agent/settings.py` (L5) and `ui/chips.py` (L1).
 
 ## Findings
 
