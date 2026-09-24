@@ -8,14 +8,44 @@ Connects to:
 import asyncio
 import os
 import sys
-from contextlib import asynccontextmanager
-from typing import Any, AsyncIterator, Dict, List, Optional
+from contextlib import AsyncExitStack, asynccontextmanager
+from contextvars import ContextVar
+from typing import Any, AsyncIterator, Dict, Iterable, List, Optional
 from mcp import ClientSession, StdioServerParameters
 from mcp.client.stdio import stdio_client
 from mcp.client.streamable_http import streamablehttp_client
 from agent.settings import get_secret
 
 MCP_TIMEOUT_SECONDS = 30.0
+
+
+class TurnSessions:
+    """MCP sessions for one user turn: one per server, opened on first need, reused by every call
+    in the turn, closed when the turn ends (AGENTS.md §4: sessions per turn, not across reruns)."""
+
+    def __init__(self, manager: "MCPClientManager"):
+        self.manager = manager
+        self.stack = AsyncExitStack()
+        self.sessions: Dict[str, Any] = {}
+        self.errors: Dict[str, str] = {}
+
+    async def open(self, server_names: Iterable[str]) -> None:
+        """Opens sessions for these servers. Call from the turn's own task, not from parallel call
+        tasks: the MCP transports use cancel scopes that must be closed by the task that opened them."""
+        for name in server_names:
+            if name in self.sessions or name in self.errors or name not in self.manager.servers_config:
+                continue
+            try:
+                async with asyncio.timeout(self.manager.timeout):
+                    self.sessions[name] = await self.stack.enter_async_context(self.manager._open_session(name))
+            except TimeoutError:
+                self.errors[name] = f"Timed out after {self.manager.timeout:.0f}s connecting to {name}"
+            except Exception as e:
+                self.errors[name] = f"Could not connect to {name}: {e}"
+
+
+# The current turn's sessions; parallel call tasks inherit it, other Streamlit sessions don't see it
+_current_turn: ContextVar[Optional[TurnSessions]] = ContextVar("mcp_current_turn", default=None)
 
 class MCPClientManager:
     """Manages MCP connections and tool execution across servers."""
@@ -146,10 +176,31 @@ class MCPClientManager:
             "all_tools": all_tools
         }
 
+    @asynccontextmanager
+    async def turn(self) -> AsyncIterator[TurnSessions]:
+        """Scope for one user turn; call_tool inside it reuses the turn's sessions."""
+        sessions = TurnSessions(self)
+        token = _current_turn.set(sessions)
+        try:
+            async with sessions.stack:
+                yield sessions
+        finally:
+            _current_turn.reset(token)
+
     async def call_tool(self, server_name: str, tool_name: str, arguments: Dict[str, Any]) -> Dict[str, Any]:
-        """Invokes a tool on a specified server session per turn."""
+        """Invokes a tool: on the current turn's session if one is open, else on a one-off session."""
         if server_name not in self.servers_config:
             raise ValueError(f"Unknown server '{server_name}'")
+
+        turn = _current_turn.get()
+        if turn is not None and server_name in turn.errors:
+            raise ConnectionError(turn.errors[server_name])
+        if turn is not None and server_name in turn.sessions:
+            try:
+                res = await asyncio.wait_for(turn.sessions[server_name].call_tool(tool_name, arguments), self.timeout)
+            except asyncio.TimeoutError:
+                raise TimeoutError(f"{server_name} tool '{tool_name}' timed out after {self.timeout:.0f}s") from None
+            return {"content": res.content, "isError": res.isError}
 
         async def _call():
             async with self._open_session(server_name) as session:

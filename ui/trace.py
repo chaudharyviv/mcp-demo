@@ -40,28 +40,45 @@ WORKING_LABEL = "Working via MCP…"
 class LiveTraceWriter:
     """Trace callback that streams steps into a container: a "running" line, replaced when the call ends.
 
-    If a status box is given, its header names the step in progress so a slow call reads as deliberate.
+    Calls can run in parallel, so each running line is tracked by its call_id. If a status box is given,
+    its header names what is in progress so a slow call reads as deliberate.
     """
 
     def __init__(self, container, status: Optional[Any] = None):
         self.container = container
         self.status = status
-        self._pending: Optional[Any] = None
+        self._running: Dict[str, Any] = {}  # call key -> (slot, event)
+
+    @staticmethod
+    def _key(evt: Dict[str, Any]) -> str:
+        # Recorded replays predate call_id; fall back to the tool name
+        return evt.get("call_id") or evt.get("tool", "")
+
+    def _update_header(self) -> None:
+        if self.status is None:
+            return
+        running = [evt for _, evt in self._running.values()]
+        if not running:
+            label = WORKING_LABEL
+        elif len(running) == 1:
+            name = SERVER_DISPLAY_NAMES.get(running[0].get("server", ""), running[0].get("server", ""))
+            label = f"Calling {name} → `{running[0].get('tool', 'tool')}`…"
+        else:
+            names = dict.fromkeys(SERVER_DISPLAY_NAMES.get(e.get("server", ""), e.get("server", "")) for e in running)
+            label = f"Calling {', '.join(names)} → {len(running)} tools in parallel…"
+        self.status.update(label=label)
 
     def __call__(self, evt: Dict[str, Any]) -> None:
         event_type = evt.get("event")
         if event_type == "tool_started":
-            self._pending = self.container.empty()
-            self._pending.markdown(format_step(evt))
-            if self.status is not None:
-                name = SERVER_DISPLAY_NAMES.get(evt.get("server", ""), evt.get("server", ""))
-                self.status.update(label=f"Calling {name} → `{evt.get('tool', 'tool')}`…")
-        elif event_type in STEP_EVENTS:
-            slot = self._pending or self.container.empty()
+            slot = self.container.empty()
             slot.markdown(format_step(evt))
-            self._pending = None
-            if self.status is not None:
-                self.status.update(label=WORKING_LABEL)
+            self._running[self._key(evt)] = (slot, evt)
+            self._update_header()
+        elif event_type in STEP_EVENTS:
+            slot, _ = self._running.pop(self._key(evt), (None, None))
+            (slot or self.container.empty()).markdown(format_step(evt))
+            self._update_header()
 
 def render_trace_log(trace_events: List[Dict[str, Any]], presenter_mode: bool = True):
     if not trace_events:

@@ -173,3 +173,21 @@ def test_server_colours_match_landing_cards():
     """Public servers share one colour, ONTAP gets the accent (design.md §4.2)."""
     from ui.trace import SERVER_COLORS
     assert SERVER_COLORS["learn"] == SERVER_COLORS["github"] != SERVER_COLORS["ontap"]
+
+def test_live_trace_writer_handles_parallel_calls():
+    """Overlapping calls each get their own line; header counts them; finishes match by call_id."""
+    from streamlit.testing.v1 import AppTest
+    at = AppTest.from_string(
+        "import streamlit as st\n"
+        "from ui.trace import WORKING_LABEL, LiveTraceWriter\n"
+        "status = st.status(WORKING_LABEL, expanded=True)\n"
+        "w = LiveTraceWriter(status, status=status)\n"
+        "for cid, tool in (('c1', 'github_list_commits'), ('c2', 'github_list_issues')):\n"
+        "    w({'event': 'tool_started', 'call_id': cid, 'server': 'github', 'tool': tool, 'args': {}})\n"
+        "st.session_state['mid'] = status\n"
+        "w({'event': 'tool_finished', 'call_id': 'c2', 'server': 'github', 'tool': 'github_list_issues', 'duration': 1.0})\n"
+    ).run()
+    lines = [m.value for m in at.markdown]
+    assert "⏱️ :blue[**GitHub**] → `github_list_commits` … running" in lines
+    assert "✓ :blue[**GitHub**] → `github_list_issues` · 1.0 s" in lines
+    assert at.status[0].label == "Calling GitHub → `github_list_commits`…"

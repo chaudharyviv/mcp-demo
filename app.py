@@ -153,7 +153,10 @@ else:
                         for m in st.session_state.messages
                         if m.get("role") in ("user", "assistant")
                     ]
-                    result = asyncio.run(agent.run_turn(agent_messages, trace_callback=trace_cb))
+                    # Reuse the startup tool list (design.md §2.3): re-discovering costs ~5-7 s per turn
+                    result = asyncio.run(agent.run_turn(
+                        agent_messages, trace_callback=trace_cb, tools_list=discovery_data.get("all_tools", [])
+                    ))
                     answer_content = result.get("content", "")
                     status.update(label="Done", state="complete", expanded=False)
 

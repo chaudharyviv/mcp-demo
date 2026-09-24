@@ -101,3 +101,32 @@ async def test_github_model_gets_readonly_tools_catalog_marks_blocked(monkeypatc
     }
     # Per-turn discovery (what the model sees) never fetches the catalog
     assert "catalog" not in await manager.get_server_tools("github")
+
+@pytest.mark.asyncio
+async def test_turn_reuses_one_session_per_server():
+    """Inside a turn, calls reuse the server's session instead of opening one per call (AGENTS §4)."""
+    import asyncio
+    manager = MCPClientManager()
+    opened = []
+    real_open = manager._open_session
+    def counting_open(name, url=None):
+        opened.append(name)
+        return real_open(name, url)
+    manager._open_session = counting_open
+    async with manager.turn() as turn:
+        await turn.open({"ontap"})
+        results = await asyncio.gather(*(manager.call_tool("ontap", "ontap_aggr_show", {}) for _ in range(3)))
+    assert opened == ["ontap"]
+    assert all(not r["isError"] for r in results)
+    # Outside a turn, a call still works on a one-off session
+    assert not (await manager.call_tool("ontap", "ontap_aggr_show", {}))["isError"]
+
+@pytest.mark.asyncio
+async def test_turn_hung_server_fails_its_calls_only():
+    """A server that can't be opened within the timeout fails its own calls; the turn still closes cleanly."""
+    manager = _hanging_manager()
+    async with manager.turn() as turn:
+        await turn.open({"ontap"})
+        assert "Timed out" in turn.errors["ontap"]
+        with pytest.raises(ConnectionError):
+            await manager.call_tool("ontap", "ontap_aggr_show", {})

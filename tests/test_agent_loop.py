@@ -3,6 +3,18 @@ import pytest
 from unittest.mock import AsyncMock, MagicMock, patch
 from agent.loop import AgentLoop, load_system_prompt, mcp_tools_to_openai_tools
 
+class _FakeTurn:
+    """Stands in for MCPClientManager.turn() in tests that mock the manager."""
+    def __init__(self):
+        self.open = AsyncMock()
+    async def __aenter__(self):
+        return self
+    async def __aexit__(self, *exc):
+        return False
+
+def _attach_turn(manager):
+    manager.turn = MagicMock(side_effect=lambda: _FakeTurn())
+
 def test_system_prompt_loading():
     """Verifies system prompt is loaded correctly."""
     prompt = load_system_prompt()
@@ -29,6 +41,7 @@ def test_mcp_tools_to_openai_tools():
 async def test_agent_loop_with_mocked_openai():
     """Tests agent loop turn with mocked OpenAI response."""
     mock_mcp_manager = MagicMock()
+    _attach_turn(mock_mcp_manager)
     mock_mcp_manager.discover_all_tools = AsyncMock(return_value={
         "all_tools": [
             {
@@ -106,6 +119,7 @@ async def test_real_mcp_content_converts_to_text():
 async def test_namespaced_remote_tool_called_by_original_name():
     """Model sees learn_* names; the Learn server must receive its own tool name (CODE_REVIEW H4)."""
     mock_mcp_manager = MagicMock()
+    _attach_turn(mock_mcp_manager)
     mock_mcp_manager.discover_all_tools = AsyncMock(return_value={
         "all_tools": [{
             "name": "learn_microsoft_docs_search",
@@ -163,6 +177,7 @@ async def test_openai_retry_only_on_5xx_and_429(status, expected_calls):
 def _agent_with_one_tool_call(tool_name: str, tools: list, call_result=None):
     """AgentLoop whose model requests one tool call, then answers 'done'."""
     manager = MagicMock()
+    _attach_turn(manager)
     manager.discover_all_tools = AsyncMock(return_value={"all_tools": tools})
     manager.call_tool = AsyncMock(return_value=call_result or {"content": [], "isError": False})
     agent = AgentLoop(api_key="mock-key", mcp_manager=manager)
@@ -223,3 +238,52 @@ async def test_iteration_cap_ends_with_a_real_answer():
     assert result["content"] == "Summary of what I found."
     assert manager.call_tool.await_count == 6
     assert agent.client.chat.completions.create.await_args.kwargs["tool_choice"] == "none"
+
+@pytest.mark.asyncio
+async def test_parallel_tool_calls_run_concurrently_and_keep_order():
+    """Tool calls requested together run in parallel (NF-1), and tool messages keep the model's order."""
+    import asyncio
+    import time
+    from mcp.types import TextContent
+    tools = [{"name": n, "description": "", "inputSchema": {"type": "object", "properties": {}}, "server": "github",
+              "original_name": n.removeprefix("github_")} for n in ("github_a", "github_b", "github_c")]
+    manager = MagicMock()
+    _attach_turn(manager)
+    manager.discover_all_tools = AsyncMock(return_value={"all_tools": tools})
+    async def slow_call(server, name, args):
+        await asyncio.sleep({"a": 0.6, "b": 0.3, "c": 0.5}[name])  # finish out of order on purpose
+        return {"content": [TextContent(type="text", text=f"result {name}")], "isError": False}
+    manager.call_tool = slow_call
+    agent = AgentLoop(api_key="mock-key", mcp_manager=manager)
+    calls = []
+    for i, n in enumerate(("github_a", "github_b", "github_c")):
+        tc = MagicMock()
+        tc.id = f"call_{i}"
+        tc.function.name = n
+        tc.function.arguments = "{}"
+        calls.append(tc)
+    msg_1 = MagicMock(tool_calls=calls)
+    msg_1.model_dump.return_value = {"role": "assistant", "tool_calls": []}
+    msg_2 = MagicMock(tool_calls=None, content="done")
+    agent.client = MagicMock()
+    agent.client.chat.completions.create = AsyncMock(side_effect=[
+        MagicMock(choices=[MagicMock(message=msg_1)]), MagicMock(choices=[MagicMock(message=msg_2)])])
+
+    events = []
+    start = time.monotonic()
+    result = await agent.run_turn([{"role": "user", "content": "q"}], trace_callback=events.append)
+    elapsed = time.monotonic() - start
+    assert elapsed < 1.2, f"tool calls look sequential ({elapsed:.2f}s)"
+    tool_msgs = [m for m in result["messages"] if m.get("role") == "tool"]
+    assert [m["tool_call_id"] for m in tool_msgs] == ["call_0", "call_1", "call_2"]
+    assert [m["content"] for m in tool_msgs] == ["result a", "result b", "result c"]
+    assert all("call_id" in e for e in events)
+
+@pytest.mark.asyncio
+async def test_cached_tools_skip_per_turn_discovery():
+    """Passing the startup tool list avoids re-discovering servers every turn (design §2.3)."""
+    agent, manager = _agent_with_one_tool_call("ontap_cluster_health_summary", [ONTAP_HEALTH_TOOL])
+    result = await agent.run_turn([{"role": "user", "content": "q"}], tools_list=[ONTAP_HEALTH_TOOL])
+    manager.discover_all_tools.assert_not_awaited()
+    manager.call_tool.assert_awaited_once()
+    assert result["content"] == "done"
