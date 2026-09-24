@@ -129,3 +129,14 @@ def test_sidebar_shows_blocked_catalog_tools():
     assert "🟢 **GitHub** · 1 of 2 tools enabled (read-only)" in [e.label for e in at.expander]
     assert "**🔒 Blocked (1): not offered to the model**" in [m.value for m in at.markdown]
     assert "~~github_merge_pull_request~~" in [c.value for c in at.caption]
+
+def test_chip_tooltips_show_full_prompt():
+    """Hovering a chip shows the exact prompt it sends (owner request)."""
+    from streamlit.testing.v1 import AppTest
+    from ui.chips import DEMO_CHIPS
+    at = AppTest.from_file("app.py", default_timeout=90).run()
+    at.button[[b.label for b in at.button].index("🚀 Start Demo")].click().run()
+    help_by_label = {b.label: b.help for b in at.button}
+    for _, label, prompt in DEMO_CHIPS:
+        assert help_by_label[label] == prompt
+    assert "no AI call" in help_by_label["Wrap up"]

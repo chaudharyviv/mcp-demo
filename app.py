@@ -87,10 +87,11 @@ else:
 
     for col, (_, label, prompt) in zip(chip_cols, DEMO_CHIPS):
         with col:
-            if st.button(label, use_container_width=True):
+            # Hover shows the exact prompt, so the presenter can preview it before clicking
+            if st.button(label, use_container_width=True, help=prompt):
                 selected_prompt = prompt
     with chip_cols[-1]:
-        if st.button("Wrap up", use_container_width=True):
+        if st.button("Wrap up", use_container_width=True, help="Show the closing takeaways (no AI call)."):
             is_wrap_up = True
 
     # Render Chat History
