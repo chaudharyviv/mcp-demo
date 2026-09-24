@@ -75,6 +75,11 @@ Decisions that refine (not change) the docs. Anything that changes `docs/` needs
 
 ## 7. Session log (newest first)
 
+### 2026-09-24 — Claude Code — README
+- Done: Added `README.md` (design.md §7 layout): synthetic-data statement, servers and guardrail, local setup and secrets, chip run-through, presenter settings, mock ONTAP tools, tests, Streamlit Cloud deploy, repo layout.
+- Tests: not affected (docs only).
+- Next step: unchanged. Seed open MCP-related issues in the demo repo, then re-run and re-record chip 2 (K1).
+
 ### 2026-09-24 — Claude Code — Fix: OpenAI calls failing in local venv
 - Symptom: every chip failed with `AsyncClient.__init__() got an unexpected keyword argument 'proxies'`.
 - Cause: `httpx` wasn't pinned, so the venv (and a fresh Streamlit Cloud install) got httpx 0.28.1, which removed `proxies`, and openai 1.52.0 still passes it. Tests passed earlier only because the global interpreter had httpx 0.27.2.
