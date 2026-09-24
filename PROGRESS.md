@@ -45,7 +45,7 @@ Status key: ⬜ Not started · 🟨 In progress · ✅ Done (tests pass, tagged)
 | Chip | Local | Deployed | Replay recorded | Notes |
 |---|---|---|---|---|
 | `1 · Docs` — Microsoft Learn answer with link | ✅ | ⬜ | ✅ | Re-verified live 2026-09-24 after CODE_REVIEW fixes; re-recorded from a real run |
-| `2 · GitHub` — MCP-related issues from demo repo | ⬜ | ⬜ | ⬜ | **Not verified.** Earlier ✅ was not possible (SSE transport + tool-name bugs). Replay contains invented issues; re-record once `GITHUB_PAT` is set |
+| `2 · GitHub` — MCP-related issues from demo repo | 🟨 | ⬜ | ⬜ | 2026-09-24: live call works (read-only endpoint, 16.4 s), but the repo has 0 open issues, so it fails "names a real issue". Seed issues, then re-record. Replay still invented |
 | `3a · Health` — aggr_a01 91%, vol_legacy_ftp offline, vol_reports snapshot overrun | ✅ | ⬜ | ✅ | Re-verified live 2026-09-24; health returns exactly the 4 spec issues |
 | `3b · Resize` — no plan produced; asks for a change number (spec §5) | ✅ | ⬜ | ✅ | Re-verified live 2026-09-24; no tool call. If the model does call the tool, it refuses (tested) |
 | `3c · Approve` — dry run, ~92% projected, aggr_a02 suggested, "Nothing was executed." | ✅ | ⬜ | ✅ | Re-verified live 2026-09-24 after prompt fix (N1); 6.0 → 6.2 TiB, 92.0% |
@@ -67,7 +67,7 @@ Decisions that refine (not change) the docs. Anything that changes `docs/` needs
 
 | ID | Issue | Severity | Found in | Status |
 |---|---|---|---|---|
-| K1 | Chip 2 (GitHub) never verified live; `replay/2_github.json` contains invented issues | High | CODE_REVIEW H10 | Open: needs `GITHUB_PAT` + `GITHUB_DEMO_REPO`, then live run + re-record |
+| K1 | Chip 2 (GitHub): pipeline now verified live (read-only endpoint, correct repo, `github_list_issues` called), but the demo repo has **0 open issues**, so the answer can't name one (spec §5). `replay/2_github.json` still contains invented issues | High | CODE_REVIEW H10 | Open: owner to seed a few MCP-related open issues in the demo repo (plan.md §3/§7), then re-run + re-record chip 2 |
 | K2 | ONTAP tools don't publish readOnly/idempotent annotations (spec §2.4); fastmcp 0.4.1 can't set them | Medium | CODE_REVIEW N3 | Open: owner to choose fastmcp upgrade vs. small override |
 | K3 | Chip 3a answer length varies run to run (one run was ~12 lines before prompt tightening) | Low | Review fixes | Watch during M7 rehearsals |
 | K4 | MCP Inspector check of the ONTAP server not recorded (AGENTS §6 M1) | Low | CODE_REVIEW L12 | Open |
