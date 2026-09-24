@@ -35,6 +35,7 @@ Status key: ⬜ Not started · 🟨 In progress · ✅ Done (tests pass, tagged)
 | fastmcp | 0.4.1 |
 | pydantic | 2.9.2 |
 | pytest | 8.3.3 |
+| httpx | 0.27.2 (pinned 2026-09-24: openai 1.52.0 breaks on httpx 0.28, which removed `proxies`) |
 | Streamlit Cloud main URL | _set at M6_ |
 | Streamlit Cloud backup URL | _set at M6_ |
 | GitHub demo repo | _name of the public demo repo with seeded MCP-related issues_ |
@@ -71,6 +72,14 @@ Decisions that refine (not change) the docs. Anything that changes `docs/` needs
 | K5 | Repo has no git remote, so nothing has been pushed | Medium | Review | Open: add remote and push |
 
 ## 7. Session log (newest first)
+
+### 2026-09-24 — Claude Code — Fix: OpenAI calls failing in local venv
+- Symptom: every chip failed with `AsyncClient.__init__() got an unexpected keyword argument 'proxies'`.
+- Cause: `httpx` wasn't pinned, so the venv (and a fresh Streamlit Cloud install) got httpx 0.28.1, which removed `proxies`, and openai 1.52.0 still passes it. Tests passed earlier only because the global interpreter had httpx 0.27.2.
+- Fix: pinned `httpx==0.27.2` in `requirements.txt` (the tested version; satisfies `mcp>=0.27` and openai's range).
+- Tests: 77 passed **in the venv**. Chip 1 verified end to end in the venv with real secrets.
+- Also found: GitHub MCP returns 400 with the configured `GITHUB_PAT` (401 with no token or a dummy token), so the token value is malformed. It's 39 chars and doesn't start `ghp_`/`github_pat_`. Owner to replace it with a fine-grained read-only PAT (spec MCP-1/§8).
+- Next step: replace `GITHUB_PAT` in `.streamlit/secrets.toml`, then verify and re-record chip 2.
 
 ### 2026-09-24 — Claude Code — All remaining CODE_REVIEW findings
 - Done: N1, N2, H10 (chips 1/3a/3b/3c re-recorded live), and all MEDIUM (M1–M17) and LOW (L1–L12) findings, one commit per item (`ca1dd58` … `6bdfa1c`). Status table in `CODE_REVIEW.md`. New files: `agent/settings.py`, `ui/chips.py`. Removed the duplicate root `spec.md`/`plan.md`/`design.md`.
