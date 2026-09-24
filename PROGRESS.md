@@ -75,6 +75,12 @@ Decisions that refine (not change) the docs. Anything that changes `docs/` needs
 
 ## 7. Session log (newest first)
 
+### 2026-09-24 — Claude Code — UI polish, owner sign-off
+- Done: chip tooltips show the full prompt (`2b0301f`); server colours in sidebar and trace (design §4.2), systems named in the trace title, status header names the running step (`cd04da2`). Verified in a real browser.
+- Tests: 84 passed.
+- Owner confirmed the app looks good locally.
+- Before presenting: (1) add a git remote and push; Streamlit Cloud deploys from GitHub, so **the deployed app has none of this session's fixes until pushed** (K5). (2) Put the new `GITHUB_PAT` in Streamlit Cloud secrets. (3) Chip 2: seed open issues in the demo repo, or drop Act 2 (plan §5 drop order); **don't use replay for chip 2**, as its recording is still invented (K1). (4) Run the M7 rehearsals on the deployed URLs.
+
 ### 2026-09-24 — Claude Code — README
 - Done: Added `README.md` (design.md §7 layout): synthetic-data statement, servers and guardrail, local setup and secrets, chip run-through, presenter settings, mock ONTAP tools, tests, Streamlit Cloud deploy, repo layout.
 - Tests: not affected (docs only).
