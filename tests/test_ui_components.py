@@ -95,3 +95,22 @@ def test_closing_card_matches_plan_talking_points():
     section = plan.split("### Closing card talking points", 1)[1].split("\n## ", 1)[0]
     plan_points = [line[2:].strip() for line in section.splitlines() if line.startswith("- ")]
     assert TAKEAWAYS == plan_points
+
+def test_sidebar_lists_tools_per_server():
+    """Sidebar shows each server's discovered tools in a collapsed expander; offline shows none."""
+    from streamlit.testing.v1 import AppTest
+    at = AppTest.from_string(
+        "from ui.sidebar import render_sidebar\n"
+        "render_sidebar({\n"
+        "  'learn': {'status': 'online', 'tools': [{'name': 'learn_microsoft_docs_search', 'description': 'Search docs.\\nMore detail.'}]},\n"
+        "  'ontap': {'status': 'online', 'tools': [{'name': 'ontap_vol_resize', 'description': 'Plans a volume resize (dry run only).'}]},\n"
+        "  'github': {'status': 'offline', 'tools': []},\n"
+        "}, on_reset_click=lambda: None)\n"
+    ).run()
+    labels = [e.label for e in at.expander]
+    assert "🟢 **Microsoft Learn** · 1 tool" in labels
+    assert "🔴 **GitHub** · 0 tools" in labels
+    markdown = [m.value for m in at.sidebar.markdown]
+    assert "`learn_microsoft_docs_search`" in markdown and "`ontap_vol_resize`" in markdown
+    captions = [c.value for c in at.caption]
+    assert "Search docs." in captions and "Not connected — no tools available." in captions

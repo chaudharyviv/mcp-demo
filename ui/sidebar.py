@@ -4,6 +4,11 @@ Sidebar UI component displaying connected systems status, active model, data bad
 import streamlit as st
 from typing import Dict, Any
 
+def short_description(text: str, limit: int = 90) -> str:
+    """First line of a tool description, trimmed so remote servers' long descriptions fit the sidebar."""
+    first = text.strip().splitlines()[0] if text.strip() else ""
+    return first if len(first) <= limit else first[:limit - 1].rstrip() + "…"
+
 def render_sidebar(servers_status: Dict[str, Any], on_reset_click) -> Dict[str, Any]:
     with st.sidebar:
         st.title("MCP Demo Control")
@@ -13,9 +18,17 @@ def render_sidebar(servers_status: Dict[str, Any], on_reset_click) -> Dict[str, 
         for server_name, display_title in [("learn", "Microsoft Learn"), ("github", "GitHub"), ("ontap", "Mock ONTAP Storage")]:
             status_info = servers_status.get(server_name, {"status": "offline", "tools": []})
             is_online = status_info.get("status") == "online"
-            tool_count = len(status_info.get("tools", []))
+            tools = status_info.get("tools", [])
             dot = "🟢" if is_online else "🔴"
-            st.markdown(f"{dot} **{display_title}** `{tool_count} tools`")
+            # Collapsed by default so the audience sees status first; expand to show the discovered tools
+            tool_label = f"{len(tools)} tool{'s' if len(tools) != 1 else ''}"
+            with st.expander(f"{dot} **{display_title}** · {tool_label}", expanded=False):
+                if not tools:
+                    st.caption("Not connected — no tools available.")
+                for tool in tools:
+                    st.markdown(f"`{tool['name']}`")
+                    if tool.get("description"):
+                        st.caption(short_description(tool["description"]))
 
         st.markdown("---")
         st.markdown("**Active Model:** `OpenAI GPT-4o mini`")
