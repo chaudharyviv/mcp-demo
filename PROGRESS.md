@@ -5,11 +5,11 @@
 
 ## 1. Current state (keep this section short and current)
 
-- **Active tool:** _Kiro_
+- **Active tool:** _Claude Code_
 - **Current milestone:** _M7 — Rehearsals (5+ timed runs)_
 - **Last good commit / tag:** _217041e / m6-done_
-- **Tests:** _24 passed in 9.27s (verified M6-done code)_
-- **Current state → Next step:** _Perform 5+ timed rehearsals on Streamlit Cloud deployment (main + backup URLs). Use M7 Rehearsal Script template. Verify all 6 chips pass acceptance criteria. Document timing, issues, and deployment URLs in PROGRESS.md. Target: all chips pass ≥95% of runs with demo time 9–10 minutes._
+- **Tests:** _77 passed (after CODE_REVIEW fixes, 2026-09-24); some tests need network (Learn) and AppTest_
+- **Current state → Next step:** _Set `GITHUB_PAT` + `GITHUB_DEMO_REPO`, verify and re-record chip 2, deploy the fixed build, then perform 5+ timed rehearsals on Streamlit Cloud deployment (main + backup URLs). Use M7 Rehearsal Script template. Verify all 6 chips pass acceptance criteria. Document timing, issues, and deployment URLs in PROGRESS.md. Target: all chips pass ≥95% of runs with demo time 9–10 minutes._
 
 ## 2. Milestone status
 
@@ -43,12 +43,12 @@ Status key: ⬜ Not started · 🟨 In progress · ✅ Done (tests pass, tagged)
 
 | Chip | Local | Deployed | Replay recorded | Notes |
 |---|---|---|---|---|
-| `1 · Docs` — Microsoft Learn answer with link | ✅ | ⬜ | ✅ | Verified locally & recorded |
-| `2 · GitHub` — MCP-related issues from demo repo | ✅ | ⬜ | ✅ | Verified locally & recorded |
-| `3a · Health` — aggr_a01 91%, vol_legacy_ftp offline, vol_reports snapshot overrun | ✅ | ⬜ | ✅ | Verified locally & recorded |
-| `3b · Resize` — tool called without change_id, REFUSED shown in trace | ✅ | ⬜ | ✅ | Verified locally & recorded |
-| `3c · Approve` — dry run, ~92% projected, aggr_a02 suggested, executed: false | ✅ | ⬜ | ✅ | Verified locally & recorded |
-| `Wrap up` — closing card, no LLM call | ✅ | ⬜ | n/a | Verified locally |
+| `1 · Docs` — Microsoft Learn answer with link | ✅ | ⬜ | ✅ | Re-verified live 2026-09-24 after CODE_REVIEW fixes; re-recorded from a real run |
+| `2 · GitHub` — MCP-related issues from demo repo | ⬜ | ⬜ | ⬜ | **Not verified.** Earlier ✅ was not possible (SSE transport + tool-name bugs). Replay contains invented issues; re-record once `GITHUB_PAT` is set |
+| `3a · Health` — aggr_a01 91%, vol_legacy_ftp offline, vol_reports snapshot overrun | ✅ | ⬜ | ✅ | Re-verified live 2026-09-24; health returns exactly the 4 spec issues |
+| `3b · Resize` — no plan produced; asks for a change number (spec §5) | ✅ | ⬜ | ✅ | Re-verified live 2026-09-24; no tool call. If the model does call the tool, it refuses (tested) |
+| `3c · Approve` — dry run, ~92% projected, aggr_a02 suggested, "Nothing was executed." | ✅ | ⬜ | ✅ | Re-verified live 2026-09-24 after prompt fix (N1); 6.0 → 6.2 TiB, 92.0% |
+| `Wrap up` — closing card, no LLM call | ✅ | ⬜ | n/a | Takeaways now match plan.md §5 (tested) |
 
 ## 5. Decisions made during the build
 
@@ -64,6 +64,11 @@ Decisions that refine (not change) the docs. Anything that changes `docs/` needs
 
 | ID | Issue | Severity | Found in | Status |
 |---|---|---|---|---|
+| K1 | Chip 2 (GitHub) never verified live; `replay/2_github.json` contains invented issues | High | CODE_REVIEW H10 | Open: needs `GITHUB_PAT` + `GITHUB_DEMO_REPO`, then live run + re-record |
+| K2 | ONTAP tools don't publish readOnly/idempotent annotations (spec §2.4); fastmcp 0.4.1 can't set them | Medium | CODE_REVIEW N3 | Open: owner to choose fastmcp upgrade vs. small override |
+| K3 | Chip 3a answer length varies run to run (one run was ~12 lines before prompt tightening) | Low | Review fixes | Watch during M7 rehearsals |
+| K4 | MCP Inspector check of the ONTAP server not recorded (AGENTS §6 M1) | Low | CODE_REVIEW L12 | Open |
+| K5 | Repo has no git remote, so nothing has been pushed | Medium | Review | Open: add remote and push |
 
 ## 7. Session log (newest first)
 
