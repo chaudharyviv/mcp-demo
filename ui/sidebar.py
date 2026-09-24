@@ -21,7 +21,13 @@ def render_sidebar(servers_status: Dict[str, Any], on_reset_click) -> Dict[str, 
             tools = status_info.get("tools", [])
             dot = "🟢" if is_online else "🔴"
             # Collapsed by default so the audience sees status first; expand to show the discovered tools
-            tool_label = f"{len(tools)} tool{'s' if len(tools) != 1 else ''}"
+            # Catalog = every tool the server has; only the enabled (read-only) ones are given to the model
+            catalog = status_info.get("catalog")
+            blocked = [t for t in catalog if not t["enabled"]] if catalog else []
+            if catalog:
+                tool_label = f"{len(tools)} of {len(catalog)} tools enabled (read-only)"
+            else:
+                tool_label = f"{len(tools)} tool{'s' if len(tools) != 1 else ''}"
             with st.expander(f"{dot} **{display_title}** · {tool_label}", expanded=False):
                 if not tools:
                     st.caption("Not connected — no tools available.")
@@ -29,6 +35,9 @@ def render_sidebar(servers_status: Dict[str, Any], on_reset_click) -> Dict[str, 
                     st.markdown(f"`{tool['name']}`")
                     if tool.get("description"):
                         st.caption(short_description(tool["description"]))
+                if blocked:
+                    st.markdown(f"**🔒 Blocked ({len(blocked)}): not offered to the model**")
+                    st.caption(" · ".join(f"~~{t['name']}~~" for t in blocked))
 
         st.markdown("---")
         st.markdown("**Active Model:** `OpenAI GPT-4o mini`")

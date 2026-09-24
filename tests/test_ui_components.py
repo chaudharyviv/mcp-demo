@@ -76,7 +76,7 @@ def test_reset_demo_rechecks_server_connectivity(monkeypatch):
     from streamlit.testing.v1 import AppTest
     from agent.mcp_clients import MCPClientManager
     calls = []
-    async def fake_discovery(self):
+    async def fake_discovery(self, include_catalog=False):
         calls.append(1)
         return {"servers": {}, "all_tools": []}
     monkeypatch.setattr(MCPClientManager, "discover_all_tools", fake_discovery)
@@ -114,3 +114,18 @@ def test_sidebar_lists_tools_per_server():
     assert "`learn_microsoft_docs_search`" in markdown and "`ontap_vol_resize`" in markdown
     captions = [c.value for c in at.caption]
     assert "Search docs." in captions and "Not connected — no tools available." in captions
+
+def test_sidebar_shows_blocked_catalog_tools():
+    """With a catalog, the sidebar shows enabled vs total and lists blocked (write) tools."""
+    from streamlit.testing.v1 import AppTest
+    at = AppTest.from_string(
+        "from ui.sidebar import render_sidebar\n"
+        "render_sidebar({'github': {'status': 'online',\n"
+        "  'tools': [{'name': 'github_list_issues', 'description': 'List issues'}],\n"
+        "  'catalog': [{'name': 'github_list_issues', 'description': 'List issues', 'enabled': True},\n"
+        "              {'name': 'github_merge_pull_request', 'description': 'Merge', 'enabled': False}]}},\n"
+        "  on_reset_click=lambda: None)\n"
+    ).run()
+    assert "🟢 **GitHub** · 1 of 2 tools enabled (read-only)" in [e.label for e in at.expander]
+    assert "**🔒 Blocked (1): not offered to the model**" in [m.value for m in at.markdown]
+    assert "~~github_merge_pull_request~~" in [c.value for c in at.caption]

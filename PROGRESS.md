@@ -61,6 +61,7 @@ Decisions that refine (not change) the docs. Anything that changes `docs/` needs
 | 2026-09-24 | Keep `cluster` on every aggregate and volume, and root-level `synthetic`, in `estate.json` (not listed in spec §3.2/§3.3) | Needed for the `cluster` filters in spec §2.4; `synthetic` marks the dataset itself. Approved by owner (CODE_REVIEW M12) | Review fixes |
 | 2026-09-24 | Resize plan also returns `current_size_tib` / `new_size_tib` | GPT-4o mini mis-converted bytes live (showed 6.3 TiB instead of 6.2); tool-computed values keep chip 3c correct (CODE_REVIEW N1) | Review fixes |
 | 2026-09-24 | Sidebar lists each server's discovered tools (collapsed expander per server, name + first line of description) | Owner request; refines spec UI-3 / design §4.1, which show only a tool count. Collapsed by default so the audience view is unchanged | Owner request |
+| 2026-09-24 | GitHub MCP uses the read-only endpoint `https://api.githubcopilot.com/mcp/readonly` for the model and all calls; the full catalog (`/mcp/`) is fetched once for the sidebar, which shows "27 of 45 enabled (read-only)" and lists the 18 blocked write tools | Owner request. The full endpoint offered 19 write tools (merge, delete, push…) to the model; read-only mode removes them server-side, so the guardrail doesn't rely on our filter or the PAT alone. **docs/spec.md §2.3 MCP-2 still lists `/mcp/`; owner to approve updating it** | Owner request |
 
 ## 6. Known issues / blockers
 

@@ -62,7 +62,8 @@ def append_recorded_answer(replay_data):
 @st.cache_resource(show_spinner="Connecting to MCP Servers...", ttl=300)
 def get_cached_mcp_manager():
     manager = MCPClientManager()
-    discovery = asyncio.run(manager.discover_all_tools())
+    # include_catalog: sidebar also shows tools the model is NOT given (e.g. GitHub write tools)
+    discovery = asyncio.run(manager.discover_all_tools(include_catalog=True))
     return manager, discovery
 
 mcp_manager, discovery_data = get_cached_mcp_manager()

@@ -76,3 +76,28 @@ async def test_discovery_runs_servers_concurrently():
     elapsed = time.monotonic() - start
     assert all(s["status"] == "offline" for s in discovery["servers"].values())
     assert elapsed < 2 * manager.timeout + 1, f"discovery looks serial ({elapsed:.1f}s)"
+
+class _FakeTool:
+    def __init__(self, name):
+        self.name, self.description, self.inputSchema = name, f"{name} tool", {"type": "object", "properties": {}}
+
+@pytest.mark.asyncio
+async def test_github_model_gets_readonly_tools_catalog_marks_blocked(monkeypatch):
+    """Model tools come from the read-only endpoint; catalog marks the rest blocked by set difference."""
+    manager = MCPClientManager()
+    cfg = manager.servers_config["github"]
+    assert cfg["url"].endswith("/mcp/readonly") and cfg["catalog_url"].endswith("/mcp/")
+
+    async def fake_list(self, server_name, url=None):
+        full = ["list_issues", "get_me", "merge_pull_request", "delete_file"]
+        return [_FakeTool(n) for n in (full if url == cfg["catalog_url"] else full[:2])]
+    monkeypatch.setattr(MCPClientManager, "_list_tools", fake_list)
+
+    res = await manager.get_server_tools("github", include_catalog=True)
+    assert [t["name"] for t in res["tools"]] == ["github_list_issues", "github_get_me"]
+    assert {t["name"]: t["enabled"] for t in res["catalog"]} == {
+        "github_list_issues": True, "github_get_me": True,
+        "github_merge_pull_request": False, "github_delete_file": False,
+    }
+    # Per-turn discovery (what the model sees) never fetches the catalog
+    assert "catalog" not in await manager.get_server_tools("github")
