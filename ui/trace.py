@@ -10,23 +10,42 @@ SERVER_DISPLAY_NAMES = {
     "github": "GitHub"
 }
 
+# design.md §4.2: public servers in one colour, the ONTAP server in an accent colour
+# (matches the landing cards: st.info is blue, st.success is green)
+SERVER_COLORS = {
+    "ontap": "green",
+    "learn": "blue",
+    "github": "blue"
+}
+
 STEP_EVENTS = ("tool_finished", "tool_failed")
 
+def server_label(server_key: str) -> str:
+    """Server name in its colour, as Streamlit Markdown, e.g. ":green[**Mock ONTAP**]"."""
+    name = SERVER_DISPLAY_NAMES.get(server_key, server_key)
+    color = SERVER_COLORS.get(server_key)
+    return f":{color}[**{name}**]" if color else f"**{name}**"
+
 def format_step(evt: Dict[str, Any]) -> str:
-    """One trace line, e.g. "✓ `Mock ONTAP` → `ontap_aggr_show` · 0.3 s" (design.md §4.3)."""
-    server_key = evt.get("server", "ontap")
-    server_name = SERVER_DISPLAY_NAMES.get(server_key, server_key)
+    """One trace line, e.g. "✓ :green[**Mock ONTAP**] → `ontap_aggr_show` · 0.3 s" (design.md §4.3)."""
+    server = server_label(evt.get("server", "ontap"))
     tool_name = evt.get("tool", "tool")
     if evt.get("event") == "tool_started":
-        return f"⏱️ `{server_name}` → `{tool_name}` … running"
+        return f"⏱️ {server} → `{tool_name}` … running"
     mark = "✓" if evt.get("event") == "tool_finished" else "✗"
-    return f"{mark} `{server_name}` → `{tool_name}` · {evt.get('duration', 0.0)} s"
+    return f"{mark} {server} → `{tool_name}` · {evt.get('duration', 0.0)} s"
+
+WORKING_LABEL = "Working via MCP…"
 
 class LiveTraceWriter:
-    """Trace callback that streams steps into a container: a "running" line, replaced when the call ends."""
+    """Trace callback that streams steps into a container: a "running" line, replaced when the call ends.
 
-    def __init__(self, container):
+    If a status box is given, its header names the step in progress so a slow call reads as deliberate.
+    """
+
+    def __init__(self, container, status: Optional[Any] = None):
         self.container = container
+        self.status = status
         self._pending: Optional[Any] = None
 
     def __call__(self, evt: Dict[str, Any]) -> None:
@@ -34,10 +53,15 @@ class LiveTraceWriter:
         if event_type == "tool_started":
             self._pending = self.container.empty()
             self._pending.markdown(format_step(evt))
+            if self.status is not None:
+                name = SERVER_DISPLAY_NAMES.get(evt.get("server", ""), evt.get("server", ""))
+                self.status.update(label=f"Calling {name} → `{evt.get('tool', 'tool')}`…")
         elif event_type in STEP_EVENTS:
             slot = self._pending or self.container.empty()
             slot.markdown(format_step(evt))
             self._pending = None
+            if self.status is not None:
+                self.status.update(label=WORKING_LABEL)
 
 def render_trace_log(trace_events: List[Dict[str, Any]], presenter_mode: bool = True):
     if not trace_events:
@@ -59,7 +83,10 @@ def render_trace_log(trace_events: List[Dict[str, Any]], presenter_mode: bool = 
     if not steps:
         return
 
-    with st.expander(f"🔍 Tool Call Trace ({len(steps)} step{'s' if len(steps) != 1 else ''})", expanded=True):
+    # Title names the systems used, so the collapsed trace still tells the "three systems" story
+    servers = list(dict.fromkeys(SERVER_DISPLAY_NAMES.get(evt.get("server", ""), evt.get("server", "")) for evt, _ in steps))
+    title = f"🔍 Tool Call Trace · {len(steps)} step{'s' if len(steps) != 1 else ''} ({', '.join(servers)})"
+    with st.expander(title, expanded=True):
         for evt, args in steps:
             st.write(format_step(evt))
             if not presenter_mode and args is not None:

@@ -3,6 +3,7 @@ Sidebar UI component displaying connected systems status, active model, data bad
 """
 import streamlit as st
 from typing import Dict, Any
+from ui.trace import SERVER_COLORS
 
 def short_description(text: str, limit: int = 90) -> str:
     """First line of a tool description, trimmed so remote servers' long descriptions fit the sidebar."""
@@ -28,7 +29,9 @@ def render_sidebar(servers_status: Dict[str, Any], on_reset_click) -> Dict[str, 
                 tool_label = f"{len(tools)} of {len(catalog)} tools enabled (read-only)"
             else:
                 tool_label = f"{len(tools)} tool{'s' if len(tools) != 1 else ''}"
-            with st.expander(f"{dot} **{display_title}** · {tool_label}", expanded=False):
+            # Same server colours as the trace and landing cards (design.md §4.2)
+            name = f":{SERVER_COLORS[server_name]}[**{display_title}**]"
+            with st.expander(f"{dot} {name} · {tool_label}", expanded=False):
                 if not tools:
                     st.caption("Not connected — no tools available.")
                 for tool in tools:

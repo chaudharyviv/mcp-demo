@@ -55,7 +55,7 @@ def test_live_trace_writer_replaces_running_line():
         "w({'event': 'tool_finished', 'server': 'ontap', 'tool': 'ontap_aggr_show', 'duration': 0.3})\n"
     ).run()
     lines = [m.value for m in at.markdown]
-    assert lines == ["✓ `Mock ONTAP` → `ontap_aggr_show` · 0.3 s"]
+    assert lines == ["✓ :green[**Mock ONTAP**] → `ontap_aggr_show` · 0.3 s"]
 
 def test_trace_log_counts_calls_not_events():
     """Started+finished pair renders as one step, not two (CODE_REVIEW M6)."""
@@ -67,7 +67,7 @@ def test_trace_log_counts_calls_not_events():
         "  {'event': 'tool_finished', 'server': 'learn', 'tool': 'learn_x', 'duration': 0.2},\n"
         "])\n"
     ).run()
-    assert at.expander[0].label == "🔍 Tool Call Trace (1 step)"
+    assert at.expander[0].label == "🔍 Tool Call Trace · 1 step (Microsoft Learn)"
     assert not any("running" in m.value for m in at.markdown)
 
 def test_reset_demo_rechecks_server_connectivity(monkeypatch):
@@ -108,8 +108,8 @@ def test_sidebar_lists_tools_per_server():
         "}, on_reset_click=lambda: None)\n"
     ).run()
     labels = [e.label for e in at.expander]
-    assert "🟢 **Microsoft Learn** · 1 tool" in labels
-    assert "🔴 **GitHub** · 0 tools" in labels
+    assert "🟢 :blue[**Microsoft Learn**] · 1 tool" in labels
+    assert "🔴 :blue[**GitHub**] · 0 tools" in labels
     markdown = [m.value for m in at.sidebar.markdown]
     assert "`learn_microsoft_docs_search`" in markdown and "`ontap_vol_resize`" in markdown
     captions = [c.value for c in at.caption]
@@ -126,7 +126,7 @@ def test_sidebar_shows_blocked_catalog_tools():
         "              {'name': 'github_merge_pull_request', 'description': 'Merge', 'enabled': False}]}},\n"
         "  on_reset_click=lambda: None)\n"
     ).run()
-    assert "🟢 **GitHub** · 1 of 2 tools enabled (read-only)" in [e.label for e in at.expander]
+    assert "🟢 :blue[**GitHub**] · 1 of 2 tools enabled (read-only)" in [e.label for e in at.expander]
     assert "**🔒 Blocked (1): not offered to the model**" in [m.value for m in at.markdown]
     assert "~~github_merge_pull_request~~" in [c.value for c in at.caption]
 
@@ -140,3 +140,36 @@ def test_chip_tooltips_show_full_prompt():
     for _, label, prompt in DEMO_CHIPS:
         assert help_by_label[label] == prompt
     assert "no AI call" in help_by_label["Wrap up"]
+
+def test_trace_title_names_servers_in_order():
+    """Collapsed trace title lists the systems used, once each, in order of use."""
+    from streamlit.testing.v1 import AppTest
+    at = AppTest.from_string(
+        "from ui.trace import render_trace_log\n"
+        "render_trace_log([\n"
+        "  {'event': 'tool_finished', 'server': 'ontap', 'tool': 'ontap_cluster_health_summary', 'duration': 0.2},\n"
+        "  {'event': 'tool_finished', 'server': 'github', 'tool': 'github_list_issues', 'duration': 0.4},\n"
+        "  {'event': 'tool_failed', 'server': 'ontap', 'tool': 'ontap_vol_show', 'duration': 0.1},\n"
+        "])\n"
+    ).run()
+    assert at.expander[0].label == "🔍 Tool Call Trace · 3 steps (Mock ONTAP, GitHub)"
+
+def test_status_header_names_current_step():
+    """While a tool runs, the status header says which server/tool; afterwards it reverts."""
+    from streamlit.testing.v1 import AppTest
+    script = (
+        "import streamlit as st\n"
+        "from ui.trace import WORKING_LABEL, LiveTraceWriter\n"
+        "status = st.status(WORKING_LABEL, expanded=True)\n"
+        "w = LiveTraceWriter(status, status=status)\n"
+        "w({'event': 'tool_started', 'server': 'ontap', 'tool': 'ontap_vol_resize', 'args': {}})\n"
+    )
+    at = AppTest.from_string(script).run()
+    assert at.status[0].label == "Calling Mock ONTAP → `ontap_vol_resize`…"
+    at = AppTest.from_string(script + "w({'event': 'tool_finished', 'server': 'ontap', 'tool': 'ontap_vol_resize', 'duration': 0.3})\n").run()
+    assert at.status[0].label == "Working via MCP…"
+
+def test_server_colours_match_landing_cards():
+    """Public servers share one colour, ONTAP gets the accent (design.md §4.2)."""
+    from ui.trace import SERVER_COLORS
+    assert SERVER_COLORS["learn"] == SERVER_COLORS["github"] != SERVER_COLORS["ontap"]

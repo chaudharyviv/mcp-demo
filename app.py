@@ -11,7 +11,7 @@ from ui.landing import render_landing_panel
 from ui.sidebar import render_sidebar
 from ui.chips import DEMO_CHIPS
 from ui.closing_card import render_closing_card
-from ui.trace import LiveTraceWriter, render_trace_log
+from ui.trace import WORKING_LABEL, LiveTraceWriter, render_trace_log
 
 st.set_page_config(
     page_title="MCP Live Demo",
@@ -125,8 +125,8 @@ else:
             if replay_data:
                 answer_content = replay_data["content"]
                 current_trace = replay_data["trace"]
-                status = st.status("Working via MCP…", expanded=True)
-                live_writer = LiveTraceWriter(status)
+                status = st.status(WORKING_LABEL, expanded=True)
+                live_writer = LiveTraceWriter(status, status=status)
                 time.sleep(REPLAY_THINK_SECONDS)
                 for evt in current_trace:
                     if evt.get("event") in ("tool_finished", "tool_failed"):
@@ -140,8 +140,8 @@ else:
                 add_assistant_message(answer_content, current_trace)
             else:
                 # Steps stream into the status box as each tool call starts and finishes (spec UI-5)
-                status = st.status("Working via MCP…", expanded=True)
-                live_writer = LiveTraceWriter(status)
+                status = st.status(WORKING_LABEL, expanded=True)
+                live_writer = LiveTraceWriter(status, status=status)
                 def trace_cb(evt):
                     current_trace.append(evt)
                     live_writer(evt)
